@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'core/theme/app_theme.dart';
 import 'routes/app_pages.dart';
 
 void main() async {
@@ -21,12 +22,7 @@ class DevSyncApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'DevSync',
       debugShowCheckedModeBanner: false,
-
-      // مكان محجوز للثيم بتاعنا (الألوان والخطوط) اللي هنعمله في ملف app_theme.dart
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.darkTheme,
 
       // ربط الخريطة اللي عملناها بالابلكيشن
       initialRoute: AppPages.initial,
