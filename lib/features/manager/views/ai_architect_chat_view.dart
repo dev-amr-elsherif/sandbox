@@ -65,22 +65,27 @@ class AiArchitectChatView extends GetView<ManagerController> {
             ),
           ),
           const SizedBox(width: 10),
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'AI Architect',
-                style: TextStyle(
-                  color: _textPrimary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'AI Architect',
+                  style: TextStyle(
+                    color: _textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              Text(
-                'Powered by Gemini 1.5 Flash',
-                style: TextStyle(color: _textSecondary, fontSize: 11),
-              ),
-            ],
+                Text(
+                  'Powered by Gemini Flash',
+                  style: const TextStyle(color: _textSecondary, fontSize: 10),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -166,7 +171,7 @@ class AiArchitectChatView extends GetView<ManagerController> {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: _primary.withValues(alpha: 0.3),
+                    color: _primary.withAlpha((0.3 * 255).round()),
                     blurRadius: 24,
                     spreadRadius: 4,
                   ),
@@ -219,9 +224,9 @@ class AiArchitectChatView extends GetView<ManagerController> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: _primary.withValues(alpha: 0.15),
+        color: _primary.withAlpha((0.15 * 255).round()),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _primary.withValues(alpha: 0.3)),
+        border: Border.all(color: _primary.withAlpha((0.3 * 255).round())),
       ),
       child: Text(
         label,
@@ -234,9 +239,7 @@ class AiArchitectChatView extends GetView<ManagerController> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
-        mainAxisAlignment: isUser
-            ? MainAxisAlignment.end
-            : MainAxisAlignment.start,
+        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isUser) ...[
@@ -272,7 +275,7 @@ class AiArchitectChatView extends GetView<ManagerController> {
                   bottomRight: Radius.circular(isUser ? 4 : 16),
                 ),
                 border: !isUser
-                    ? Border.all(color: _primary.withValues(alpha: 0.2))
+                    ? Border.all(color: _primary.withAlpha((0.2 * 255).round()))
                     : null,
               ),
               child: Text(
@@ -339,7 +342,7 @@ class AiArchitectChatView extends GetView<ManagerController> {
                 bottomRight: Radius.circular(16),
                 bottomLeft: Radius.circular(4),
               ),
-              border: Border.all(color: _primary.withValues(alpha: 0.3)),
+              border: Border.all(color: _primary.withAlpha((0.3 * 255).round())),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -373,38 +376,45 @@ class AiArchitectChatView extends GetView<ManagerController> {
 
   Widget _buildSuggestedPrompts() {
     return Obx(() {
-      if (controller.chatMessages.isNotEmpty) return const SizedBox.shrink();
-      return SizedBox(
-        height: 42,
+      final suggestions = controller.dynamicSuggestions.isNotEmpty
+          ? controller.dynamicSuggestions
+          : (controller.chatMessages.isEmpty ? controller.suggestedPrompts : <String>[]);
+
+      if (suggestions.isEmpty) return const SizedBox.shrink();
+
+      return Container(
+        height: 50,
+        padding: const EdgeInsets.symmetric(vertical: 4),
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: controller.suggestedPrompts.length,
+          itemCount: suggestions.length,
           itemBuilder: (_, i) {
-            final prompt = controller.suggestedPrompts[i];
+            final prompt = suggestions[i];
             return GestureDetector(
               onTap: () {
-                _inputController.text = prompt;
+                controller.sendMessage(prompt);
               },
               child: Container(
                 margin: const EdgeInsets.only(right: 8),
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
+                  horizontal: 16,
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: _surfaceLight,
+                  color: _primary.withAlpha((0.1 * 255).round()),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: _primary.withValues(alpha: 0.25)),
+                  border: Border.all(color: _primary.withAlpha((0.3 * 255).round())),
                 ),
-                child: Text(
-                  prompt,
-                  style: const TextStyle(
-                    color: _textSecondary,
-                    fontSize: 13,
-                    overflow: TextOverflow.ellipsis,
+                child: Center(
+                  child: Text(
+                    prompt,
+                    style: const TextStyle(
+                      color: _primaryLight,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                  maxLines: 1,
                 ),
               ),
             );
@@ -422,7 +432,7 @@ class AiArchitectChatView extends GetView<ManagerController> {
       decoration: BoxDecoration(
         color: _surface,
         border: Border(
-          top: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+          top: BorderSide(color: Colors.white.withAlpha((0.06 * 255).round())),
         ),
       ),
       child: Row(
@@ -433,7 +443,7 @@ class AiArchitectChatView extends GetView<ManagerController> {
               decoration: BoxDecoration(
                 color: _surfaceLight,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: _primary.withValues(alpha: 0.2)),
+                border: Border.all(color: _primary.withAlpha((0.2 * 255).round())),
               ),
               child: TextField(
                 controller: _inputController,
@@ -467,33 +477,31 @@ class AiArchitectChatView extends GetView<ManagerController> {
                 borderRadius: BorderRadius.circular(14),
                 boxShadow: [
                   BoxShadow(
-                    color: _primary.withValues(alpha: 0.15),
+                    color: _primary.withAlpha((0.15 * 255).round()),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   ),
                 ],
               ),
-              child: Obx(() {
-                return controller.isAnalyzing.value
-                    ? const Center(
-                        child: SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        ),
-                      )
-                    : IconButton(
-                        onPressed: _sendMessage,
-                        icon: const Icon(
-                          Icons.send_rounded,
+              child: controller.isAnalyzing.value
+                  ? const Center(
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
                           color: Colors.white,
-                          size: 20,
+                          strokeWidth: 2,
                         ),
-                      );
-              }),
+                      ),
+                    )
+                  : IconButton(
+                      onPressed: _sendMessage,
+                      icon: const Icon(
+                        Icons.send_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
             ),
           ),
         ],

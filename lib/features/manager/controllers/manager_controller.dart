@@ -1,7 +1,9 @@
 import 'package:get/get.dart';
-import 'dart:async';
+import '../../../core/services/ai_service.dart';
 
 class ManagerController extends GetxController {
+  final AIService _aiService = Get.find<AIService>();
+
   // ─── Reactive Variables ───────────────────────────────────────────────────
 
   /// قائمة رسائل الشات — كل map فيها 'role' ('user' أو 'bot') و 'text'
@@ -16,6 +18,9 @@ class ManagerController extends GetxController {
   /// حالة عرض الـ workspace (بعد ما الـ specs تتولد)
   final hasGeneratedSpecs = false.obs;
 
+  /// قائمة الاقتراحات التفاعلية (Quick Replies)
+  final dynamicSuggestions = <String>[].obs;
+
   // ─── Suggested Prompts ────────────────────────────────────────────────────
 
   final List<String> suggestedPrompts = [
@@ -26,6 +31,7 @@ class ManagerController extends GetxController {
     "What backend suits a fintech startup?",
   ];
 
+  // ─── Simulated Developer Matches ─────────────────────────────────────────
   // ─── Simulated Developer Matches ─────────────────────────────────────────
 
   final List<Map<String, dynamic>> matchedDevelopers = [
@@ -54,136 +60,131 @@ class ManagerController extends GetxController {
 
   // ─── Methods ─────────────────────────────────────────────────────────────
 
-  /// إضافة رسالة المدير وتوليد رد الـ AI
+  /// إضافة رسالة المدير وتوليد رد الـ AI في الوقت الحقيقي (Streaming)
   Future<void> sendMessage(String message) async {
     if (message.trim().isEmpty) return;
 
     // أضف رسالة المدير
     chatMessages.add({'role': 'user', 'text': message.trim()});
+    dynamicSuggestions.clear(); // مسح الاقتراحات السابقة
+
+    // أضف مكان لرد الـ AI (رسالة فارغة سيتم تحديثها)
+    final int botMessageIndex = chatMessages.length;
+    chatMessages.add({'role': 'bot', 'text': ''});
 
     // ابدأ حالة التحليل
     isAnalyzing.value = true;
 
-    // محاكاة delay الـ AI (هيتاستبدل بـ Gemini API لاحقاً)
-    await Future.delayed(const Duration(milliseconds: 1200));
+    String fullResponse = '';
 
-    // رد الـ AI المحاكى
-    final botReply = _generateSimulatedResponse(message);
-    chatMessages.add({'role': 'bot', 'text': botReply});
+    try {
+      // المحاولة الأولى: البث المباشر (أسرع وأفضل تجربة مستخدم)
+      print("🚀 Attempting to stream AI response...");
+      final stream = _aiService.sendMessageStream(message.trim());
+      
+      await for (final chunk in stream) {
+        fullResponse += chunk;
+        chatMessages[botMessageIndex] = {'role': 'bot', 'text': fullResponse};
+      }
 
-    isAnalyzing.value = false;
+      // إذا اكتمل البث بنجاح، نعالج الاقتراحات
+      final cleanText = _handleDynamicSuggestions(fullResponse);
+      chatMessages[botMessageIndex] = {'role': 'bot', 'text': cleanText};
+
+    } catch (e) {
+      print("⚠️ Streaming failed: $e. Falling back to normal request...");
+      
+      try {
+        // المحاولة الثانية (Fallback): الطلب العادي مع الـ Retry Logic
+        final botReply = await _aiService.sendMessage(message.trim());
+        
+        final cleanText = _handleDynamicSuggestions(botReply);
+        chatMessages[botMessageIndex] = {'role': 'bot', 'text': cleanText};
+        
+      } catch (e2) {
+        print("❌ All AI attempts failed: $e2");
+        
+        String errorMessage = '❌ Something went wrong.';
+        final errorString = e2.toString();
+
+        if (errorString.contains('503')) {
+          errorMessage = '🕒 Gemini is currently busy. Please try again in a few seconds.';
+        } else if (errorString.contains('429')) {
+          errorMessage = '⚠️ API Rate limit reached.';
+        } else {
+          errorMessage = '❌ Error: $errorString';
+        }
+
+        chatMessages[botMessageIndex] = {
+          'role': 'bot',
+          'text': errorMessage,
+        };
+      }
+    } finally {
+      isAnalyzing.value = false;
+    }
   }
 
-  /// توليد specs المشروع من كل الشات (هيتربط بـ Gemini لاحقاً)
+  /// تنظيف نص الـ AI واستخراج الاقتراحات [[Suggest: Opt1 | Opt2]]
+  String _handleDynamicSuggestions(String text) {
+    final regExp = RegExp(r'\[\[Suggest:\s*(.*?)\s*\]\]');
+    final match = regExp.firstMatch(text);
+    
+    if (match != null) {
+      final suggestionsText = match.group(1);
+      if (suggestionsText != null) {
+        final options = suggestionsText.split('|').map((e) => e.trim()).toList();
+        dynamicSuggestions.assignAll(options);
+      }
+      // إزالة التاج من النص لكي لا يظهر للمستخدم بشكل خام
+      return text.replaceFirst(regExp, '').trim();
+    }
+    
+    return text;
+  }
+
+  /// توليد specs المشروع الحقيقية (JSON) من Gemini
   Future<void> generateProjectSpecs() async {
     if (chatMessages.isEmpty) return;
 
     isAnalyzing.value = true;
-    await Future.delayed(const Duration(milliseconds: 2000));
+    
+    try {
+      final specs = await _aiService.generateSpecs();
+      
+      if (specs.isNotEmpty) {
+        projectRequirements.value = specs;
+        hasGeneratedSpecs.value = true;
+        
+        chatMessages.add({
+          'role': 'bot',
+          'text': '✅ Project specifications generated successfully! Navigate to your workspace to view the full breakdown and matched developers.',
+        });
 
-    // محاكاة الـ JSON اللي Gemini هيرجعه
-    projectRequirements.value = {
-      'project_name': 'AI-Defined Project',
-      'summary':
-          'A cross-platform mobile application with AI-powered features, real-time data sync, and secure authentication.',
-      'tech_stack': {
-        'frontend': 'Flutter (Dart)',
-        'backend': 'Firebase (Firestore + Cloud Functions)',
-        'ai': 'Gemini 1.5 Flash',
-        'auth': 'Firebase Auth + GitHub OAuth',
-      },
-      'timeline': '6 weeks',
-      'budget_estimate': '\$3,000 – \$8,000',
-      'required_skills': [
-        'Flutter',
-        'Firebase',
-        'REST APIs',
-        'AI Integration',
-        'Git',
-      ],
-      'complexity': 'Medium-High',
-      'team_size': '3–5 developers',
-      'milestones': [
-        'Week 1–2: Auth + Core Architecture',
-        'Week 3–4: Main Features + AI Integration',
-        'Week 5–6: Testing + Launch',
-      ],
-    };
+        Get.toNamed('/manager-workspace');
+      } else {
+        chatMessages.add({
+          'role': 'bot',
+          'text': '⚠️ The AI returned an empty response. Please try adding more details about your project first.',
+        });
+      }
+    } catch (e) {
+      final errorStr = e.toString();
+      String userFriendlyError = '❌ Failed to generate specs: $errorStr';
+      
+      if (errorStr.contains('429')) {
+        userFriendlyError = '⚠️ Quota Exceeded. Please wait about 60 seconds and try clicking "Generate Specs" again.';
+      } else if (errorStr.contains('503')) {
+        userFriendlyError = '🕒 Servers are busy. Please try again in a few moments.';
+      }
 
-    hasGeneratedSpecs.value = true;
-    isAnalyzing.value = false;
-
-    // إضافة رسالة تأكيد في الشات
-    chatMessages.add({
-      'role': 'bot',
-      'text':
-          '✅ Project specifications generated successfully! Navigate to your workspace to view the full breakdown and matched developers.',
-    });
-  }
-
-  /// محاكاة ردود AI ذكية بناءً على كلام المدير
-  String _generateSimulatedResponse(String message) {
-    final msg = message.toLowerCase();
-
-    if (msg.contains('tech stack') || msg.contains('technology')) {
-      return '🔧 Based on your requirements, I recommend:\n\n'
-          '• **Frontend**: Flutter for cross-platform reach\n'
-          '• **Backend**: Firebase for real-time + scalability\n'
-          '• **AI Layer**: Gemini 1.5 Flash for smart features\n\n'
-          'This stack ensures fast development with a small team. Want me to elaborate on any part?';
+      chatMessages.add({
+        'role': 'bot',
+        'text': userFriendlyError,
+      });
+    } finally {
+      isAnalyzing.value = false;
     }
-
-    if (msg.contains('timeline') || msg.contains('deadline') || msg.contains('weeks')) {
-      return '📅 Based on typical project complexity, I estimate:\n\n'
-          '• **MVP**: 4–6 weeks with a team of 3–5\n'
-          '• **Full Product**: 8–12 weeks\n\n'
-          'Key milestones would be Auth (Week 1), Core Features (Weeks 2–4), and Polish + Launch (Weeks 5–6).\n\nShall I break this down further?';
-    }
-
-    if (msg.contains('budget') || msg.contains('cost') || msg.contains('price')) {
-      return '💰 Here\'s a rough budget breakdown:\n\n'
-          '• **Development**: \$2,000–\$6,000\n'
-          '• **Firebase (monthly)**: \$25–\$150\n'
-          '• **AI API (Gemini)**: Free tier available\n'
-          '• **App Store fees**: \$125/year\n\n'
-          'Total MVP estimate: **\$2,500–\$7,000**. Adjust based on team size.';
-    }
-
-    if (msg.contains('e-commerce') || msg.contains('shop') || msg.contains('store')) {
-      return '🛒 For an e-commerce app, you\'ll need:\n\n'
-          '• Product catalog with search & filters\n'
-          '• Cart & checkout flow\n'
-          '• Payment gateway (Stripe or local)\n'
-          '• Order tracking\n'
-          '• Admin dashboard\n\n'
-          'Recommended stack: **Flutter + Firebase + Stripe**. Want me to estimate the full spec?';
-    }
-
-    if (msg.contains('chat') || msg.contains('real-time') || msg.contains('messaging')) {
-      return '💬 Real-time chat at scale needs:\n\n'
-          '• **Firebase Realtime DB** or Firestore with listeners\n'
-          '• Push notifications (FCM)\n'
-          '• Message encryption for privacy\n'
-          '• Typing indicators & read receipts\n\n'
-          'For 10K+ users, Cloud Functions will handle the heavy lifting. Shall I define the data model?';
-    }
-
-    // رد افتراضي ذكي
-    return '🤔 Interesting! Based on what you\'ve described, this sounds like a **${_guessProjectType(msg)}** project.\n\n'
-        'To define precise requirements, tell me:\n'
-        '1. Who are the target users?\n'
-        '2. What\'s your timeline?\n'
-        '3. Any specific technical constraints?\n\n'
-        'The more context you share, the better I can tailor the architecture for you.';
-  }
-
-  String _guessProjectType(String msg) {
-    if (msg.contains('delivery') || msg.contains('food')) return 'Delivery & Logistics';
-    if (msg.contains('social') || msg.contains('friend')) return 'Social Platform';
-    if (msg.contains('health') || msg.contains('medical')) return 'HealthTech';
-    if (msg.contains('education') || msg.contains('learn')) return 'EdTech';
-    if (msg.contains('finance') || msg.contains('payment')) return 'FinTech';
-    return 'Mobile Application';
   }
 
   /// مسح كل الشات والـ specs
@@ -192,5 +193,6 @@ class ManagerController extends GetxController {
     projectRequirements.clear();
     hasGeneratedSpecs.value = false;
     isAnalyzing.value = false;
+    _aiService.reset();
   }
 }

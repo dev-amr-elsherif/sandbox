@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'core/theme/app_theme.dart';
 import 'routes/app_pages.dart';
@@ -7,6 +8,9 @@ import 'routes/app_pages.dart';
 void main() async {
   // السطر ده مهم جداً عشان نتأكد إن الفلاتر جاهز قبل ما نعمل أي إعدادات خارجية زي فايربيز
   WidgetsFlutterBinding.ensureInitialized();
+
+  // تحميل ملف البيئة (.env) للوصول لـ API Keys بأمان
+  await dotenv.load(fileName: ".env");
 
   // مكان محجوز لتعريف Firebase بعدين
   // await Firebase.initializeApp();
