@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import '../features/auth/bindings/auth_binding.dart';
+import '../features/manager/bindings/manager_binding.dart';
 // 💡 ملاحظة: هتحتاج تعمل import للشاشات والـ Bindings بتاعتك هنا
 // إحنا عملنا شوية ملفات وهمية (Dummy) في الخطوة اللي فاتت، هنربطهم كبداية:
 import '../features/auth/views/login_view.dart';
@@ -29,13 +30,13 @@ abstract class AppPages {
     // ==========================================
     GetPage(
       name: AppRoutes.aiArchitectChat,
-      page: () => const AiArchitectChatView(),
-      // binding: ManagerBinding(), // هنفعلها لما نكتب كود الـ Binding
+      page: () => AiArchitectChatView(),
+      binding: ManagerBinding(),
     ),
     GetPage(
       name: AppRoutes.managerWorkspace,
-      page: () => const ManagerWorkspaceView(),
-      // binding: ManagerBinding(),
+      page: () => ManagerWorkspaceView(),
+      binding: ManagerBinding(),
     ),
 
     // ==========================================
