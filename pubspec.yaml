@@ -1,0 +1,54 @@
+name: dev_match_app
+description: "DevSync - AI-powered developer matching platform"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State Management & Navigation
+  get: ^4.6.6
+
+  # Firebase
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.4.4
+  firebase_messaging: ^15.1.3
+  firebase_remote_config: ^5.1.3
+  firebase_analytics: ^11.3.3
+  cloud_functions: ^5.1.3
+  
+  # Auth
+  google_sign_in: ^6.2.1
+  flutter_web_auth_2: ^4.0.0
+
+  # HTTP
+  dio: ^5.7.0
+
+  # Offline / Caching
+  hive_flutter: ^1.1.0
+
+  # AI
+  google_generative_ai: ^0.4.6
+
+  # UI Utilities
+  google_fonts: ^6.2.1
+  shimmer: ^3.0.0
+  flutter_animate: ^4.5.0
+  cached_network_image: ^3.4.1
+  permission_handler: ^11.3.1
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  hive_generator: ^2.0.1
+  build_runner: ^2.4.12
+
+flutter:
+  uses-material-design: true

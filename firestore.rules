@@ -1,0 +1,48 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Users ────────────────────────────────────────────────────────
+    match /users/{userId} {
+      // Only authenticated user can read/write their own document
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // Other authenticated users can read basic profile (for matching)
+      // but NOT sensitive fields like githubAccessToken or fcmToken
+      allow read: if request.auth != null
+        && !('githubAccessToken' in resource.data)
+        && !('fcmToken' in resource.data);
+    }
+
+    // ── Projects ─────────────────────────────────────────────────────
+    match /projects/{projectId} {
+      // Any authenticated user can read active projects
+      allow read: if request.auth != null && resource.data.status == 'active';
+
+      // Only the owner can create, update, delete
+      allow create: if request.auth != null
+        && request.resource.data.ownerId == request.auth.uid;
+
+      allow update, delete: if request.auth != null
+        && resource.data.ownerId == request.auth.uid;
+    }
+
+    // ── Matches ──────────────────────────────────────────────────────
+    match /matches/{matchId} {
+      // Developers can only read matches where they are the developer
+      // AI reasoning is NEVER exposed to developers (no client access)
+      allow read: if false; // All match reads done server-side only
+
+      // Only server/Cloud Functions can write
+      allow write: if false;
+    }
+
+    // ── Notifications ─────────────────────────────────────────────────
+    match /notifications/{notifId} {
+      // Cloud Functions write notifications, users can read their own
+      allow read: if request.auth != null
+        && resource.data.to == request.auth.token.fcm_token;
+      allow write: if false; // Server-side only
+    }
+  }
+}
