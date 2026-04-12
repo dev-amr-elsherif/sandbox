@@ -18,7 +18,7 @@ class AIChatView extends GetView<AIChatController> {
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
       decoration: BoxDecoration(
-        color: AppTheme.background.withOpacity(0.95),
+        color: AppTheme.background.withValues(alpha: 0.95),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
@@ -86,7 +86,7 @@ class AIChatView extends GetView<AIChatController> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         constraints: BoxConstraints(maxWidth: Get.width * 0.75),
         decoration: BoxDecoration(
-          color: isModel ? Colors.white.withOpacity(0.05) : AppTheme.primary.withOpacity(0.2),
+          color: isModel ? Colors.white.withValues(alpha: 0.05) : AppTheme.primary.withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(16).copyWith(
             bottomLeft: isModel ? Radius.zero : const Radius.circular(16),
             bottomRight: isModel ? const Radius.circular(16) : Radius.zero,

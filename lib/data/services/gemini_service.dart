@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import '../../core/constants/api_constants.dart';
+import 'package:flutter/foundation.dart';
 
 class GeminiService {
   // خدمة بسيطة للتعامل مع الذكاء الاصطناعي
@@ -44,20 +45,45 @@ Ensure the JSON is strictly correctly formatted.
       final cleanJson = text.substring(jsonStart, jsonEnd + 1);
       return jsonDecode(cleanJson) as Map<String, dynamic>;
     } catch (e) {
-      print('DEBUG: Gemini extraction error: $e');
+      debugPrint('DEBUG: Gemini extraction error: $e');
       return null;
     }
   }
 
-  // حساب نسبة التطابق بين المطور والمشروع
-  Future<double> calculateMatch(String skills, String projectDescription) async {
+  // حساب نسبة التطابق مع دمج نشاط GitHub لزيادة الدقة
+  Future<double> calculateMatch(
+    String skills, 
+    String projectDescription, {
+    Map<String, dynamic>? githubActivity,
+  }) async {
     try {
-      final prompt = 'Rate the match between these developer skills: "$skills" and this project description: "$projectDescription". Return only a number between 0 and 100.';
+      String githubContext = '';
+      if (githubActivity != null && githubActivity['error'] == null) {
+        githubContext = '''
+User GitHub Activity:
+- Top Languages: ${githubActivity['top_languages']?.join(', ') ?? 'N/A'}
+- Recent Repos: ${githubActivity['recent_repos']?.join(', ') ?? 'N/A'}
+''';
+      }
+
+      final prompt = '''
+$githubContext
+Rate the match between these developer skills: "$skills" and this project description: "$projectDescription".
+Consider the GitHub activity if provided as a signal of proven expertise.
+Return only a number between 0 and 100.
+''';
       final content = [Content.text(prompt)];
       final response = await _model.generateContent(content);
-      return double.tryParse(response.text ?? '0') ?? 0.0;
+      return double.tryParse(response.text ?? '0.0') ?? 0.0;
     } catch (e) {
       return 0.0;
     }
+  }
+
+  // ميزة تحسين الخوارزمية بناءً على رأي المستخدم (Feedback Loop)
+  Future<void> logMatchFeedback(String matchId, bool isAccurate) async {
+    // التوثيق للأغراض التحليلية لتحسين البرومبت في المستقبل
+    debugPrint('DEBUG: Match $matchId marked as ${isAccurate ? 'Accurate' : 'Inaccurate'}');
+    // Future: Save to Firestore for batch prompt tuning
   }
 }

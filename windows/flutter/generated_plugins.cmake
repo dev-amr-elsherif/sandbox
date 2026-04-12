@@ -4,12 +4,10 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   cloud_firestore
-  desktop_webview_window
+  desktop_webview_auth
   firebase_auth
   firebase_core
   permission_handler_windows
-  url_launcher_windows
-  window_to_front
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST

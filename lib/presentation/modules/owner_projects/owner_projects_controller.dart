@@ -25,4 +25,24 @@ class OwnerProjectsController extends GetxController {
     
     ever(sentInvitations, (_) => isLoading.value = false);
   }
+
+  // حذف المشروع وكل ما يتعلق به إذا لم يكن هناك مقبولين
+  Future<void> deleteProject(String projectId) async {
+    try {
+      await _firebaseProvider.hardDeleteProject(projectId);
+      Get.snackbar('Success', 'Project deleted successfully');
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to delete project: $e');
+    }
+  }
+
+  // إرسال طلب إلغاء (عند وجود مطورين مقبولين)
+  Future<void> requestCancellation(String invitationId, String apology) async {
+    try {
+      await _firebaseProvider.proposeCancellation(invitationId, apology);
+      Get.snackbar('Success', 'Cancellation request sent to developer');
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to send request: $e');
+    }
+  }
 }

@@ -1,59 +1,57 @@
-# DevSync - AI-Powered Developer Matching Platform
+# DevSync: Secure AI Project Collaborator
+**Date: April 12, 2026**
 
-DevSync is a modern Flutter application designed to connect Developers with Project Owners through intelligent AI-driven matching. The app features a premium Glassmorphism UI and is powered by Google Gemini AI for skill matching and project assistance.
+## 🌟 Overview
+DevSync is a premium, AI-powered platform designed for developers to find high-impact collaborators for open-source and private projects. By leveraging **Google Gemini AI**, the platform moves beyond simple keyword Matching to analyze developer expertise through **GitHub Activity** and skill sets.
 
-## 🚀 Recent Architectural Overhaul (Refactor)
+## 🤖 Core AI Implementation (Prompt Engineering)
+The platform features a sophisticated AI-driven discovery engine:
+- **Expertise Matching**: Uses a refined Gemini-1.5-flash prompt that evaluates a developer's real-world expertise by analyzing their **GitHub Repository activity**, top languages, and public contributions.
+- **Feedback-Driven Optimization**: Implements a dedicated **Feedback Loop** where users can rate the accuracy of AI matches. This data is logged to evaluate and optimize prompt performance over time.
+- **Project Proposal Architect**: An AI assistant that helps owners structure their projects into professional JSON-based proposals.
 
-We have recently completed a major restructuring of the application to support a robust, role-based system.
+## 🔐 Technical Architecture & Security
+- **Authentication**: Implements **Firebase UI Auth** for a multi-platform, secure sign-in experience supporting:
+  - **Google OAuth**: One-tap secure login.
+  - **Email/Password**: Traditional secure authentication.
+- **Security model**: Adheres to the Android software stack security model, utilizing `proguard` for **Code Obfuscation** and strict **Runtime Permission Management** via `permission_handler`.
+- **FCM Integration**: Leverages **Firebase Cloud Messaging** (FCM) to deliver real-time collaboration alerts and project updates directly to user devices.
 
-### 1. Unified MainShell Navigation
-The app now uses a central `MainShell` to handle navigation. This includes:
-- **Dynamic Bottom Navigation**: The tabs automatically switch between **Developer** and **Owner** sets based on the logged-in user's role.
-- **Improved Routing**: All authentication flows now converge into a single entry point (`/main-shell`), simplifying state management and navigation history.
+## 🎭 Advanced UI & UX
+- **Glassmorphism Design**: A modern, premium aesthetic using soft gradients, translucent cards, and high-fidelity blur effects.
+- **Advanced Animations**: 
+  - **Implicit Animations**: Smooth transitions between app states.
+  - **Tween & Transition Widgets**: Custom `TweenAnimationBuilder` implementations for glowing network effects and fluid content entry (Advanced Networking Experience).
+  - Built with `flutter_animate` for high-performance micro-interactions.
 
-### 2. Feature-Based Modules
-The project architecture has been reorganized into feature-based modules. We have scaffolded the following views for both roles:
-- **Developer Flow**: 
-  - 🏠 **Dashboard**: AI-recommended projects and stats.
-  - 📂 **Projects**: Browse all available projects.
-  - 🤖 **Matches**: View AI-calculated match scores.
-  - 👤 **Profile**: Manage developer skills and GitHub info.
-- **Owner Flow**:
-  - 🏠 **Dashboard**: Overview of posted projects.
-  - ➕ **Create Project**: Post new opportunities.
-  - 📊 **My Projects**: Manage your projects and see matched developers.
-  - 👤 **Profile**: Company and personal information.
+## 📦 Deployment & Flavors
+The project is architected for production-grade deployment:
+- **Build Flavors**: Configured with multiple `productFlavors` in Gradle:
+  - `free`: Basic matching and project limits.
+  - `pro`: Unlimited AI matching and advanced discovery features.
+- **Code Protection**: Uses **R8/ProGuard obfuscation** to protect intellectual property before being released as an **Android App Bundle (.aab)**.
 
-### 3. Global AI Assistant
-A **Global Floating AI Button** (⭕) is now present on every screen.
-- Tapping the button opens the **DevSync AI Assistant** (Chat interface).
-- Powered by **Gemini AI**, this assistant helps users with project suggestions, profile improvements, and general matching questions.
-
-### 4. AI Matching & UI System
-- **Match Score Badge**: Updated to a 4-tier color system:
-  - 🟢 **90-100**: Perfect Match
-  - 🔵 **70-89**: Strong Match
-  - 🟠 **50-69**: Medium Match
-  - 🔴 **<50**: Weak Match
-- **UI Language**: Consistent use of **Glassmorphism**, soft shadows, and a blue primary color palette.
-
----
-
-## 🛠 Tech Stack
-- **Framework**: [Flutter](https://flutter.dev)
-- **State Management**: [GetX](https://pub.dev/packages/get)
-- **Backend/Database**: [Firebase](https://firebase.google.com) (Auth, Firestore)
-- **AI Integration**: [Google Gemini AI](https://deepmind.google/technologies/gemini/)
-- **Animations**: [Flutter Animate](https://pub.dev/packages/flutter_animate)
-
-## 📁 Project Structure
+## 📂 Project Structure
 ```text
 lib/
-├── app/          # Routes and Global Config
-├── core/         # Theme, Constants, Patterns
-├── data/         # Models, Providers, Services
-├── presentation/ # Modules, Widgets, UI Components
-│   ├── modules/  # Feature-based folders (Auth, MainShell, etc.)
-│   └── widgets/  # Shared reusable UI elements
-└── main.dart     # Entry point
+├── app/          # Routes (GetX) and Flavor configs
+├── core/         # Premium Theme, Constants, Strings
+├── data/
+│   ├── models/   # Project, User, and Invitation models
+│   ├── providers/# Firebase Firestore & Auth providers
+│   └── services/ # AI (Gemini), GitHub, FCM, and Analytics
+├── presentation/
+│   ├── modules/  # Feature-based architecture (Auth, Dashboard, Projects)
+│   └── widgets/  # Custom UI (GlassCard, Advanced Animations)
+└── main.dart     # Multi-platform entry point
 ```
+
+## 🛠 Tech Stack
+- **Framework**: Flutter (Dart)
+- **AI**: Google Generative AI (Gemini 1.5)
+- **Backend**: Firebase (Auth, Firestore, Messaging, Analytics, Remote Config)
+- **Analytics**: Real-time event tracking and role-selection logging.
+- **State Management**: GetX (Performance & Navigation)
+
+---
+*Developed with focus on Android Software Stack security and modern AI architecture.*

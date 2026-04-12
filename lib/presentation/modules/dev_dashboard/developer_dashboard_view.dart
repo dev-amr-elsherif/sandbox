@@ -6,6 +6,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../data/models/project_model.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/loading_shimmer.dart';
+import '../../../../data/services/gemini_service.dart';
 import '../../widgets/match_score_badge.dart';
 import '../auth/auth_controller.dart';
 import 'developer_controller.dart';
@@ -142,8 +143,10 @@ class _MatchCard extends StatelessWidget {
     final ProjectModel project = match['project'];
     final double score = match['score'];
 
-    return GlassCard(
-      child: Column(
+    return GestureDetector(
+      onTap: () => Get.toNamed('/project-details', arguments: project),
+      child: GlassCard(
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -188,12 +191,64 @@ class _MatchCard extends StatelessWidget {
                   .toList(),
             ),
           ],
+          const Divider(height: 24, color: Colors.white10),
+          _MatchFeedbackSection(matchId: project.id),
         ],
       ),
-    )
-        .animate(delay: Duration(milliseconds: 80 * index))
+    ),
+).animate(delay: Duration(milliseconds: 80 * index))
         .fadeIn(duration: 500.ms)
         .slideY(begin: 0.15, curve: Curves.easeOutQuart);
+  }
+}
+
+class _MatchFeedbackSection extends StatelessWidget {
+  final String matchId;
+  const _MatchFeedbackSection({required this.matchId});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text('Is this match accurate?', 
+          style: AppTheme.bodySmall.copyWith(fontSize: 10, color: AppTheme.textSecondary)),
+        const Spacer(),
+        _FeedbackButton(matchId: matchId, isAccurate: true, icon: Icons.thumb_up_alt_rounded),
+        const SizedBox(width: 8),
+        _FeedbackButton(matchId: matchId, isAccurate: false, icon: Icons.thumb_down_alt_rounded),
+      ],
+    );
+  }
+}
+
+class _FeedbackButton extends StatelessWidget {
+  final String matchId;
+  final bool isAccurate;
+  final IconData icon;
+
+  const _FeedbackButton({
+    required this.matchId,
+    required this.isAccurate,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () {
+          Get.find<GeminiService>().logMatchFeedback(matchId, isAccurate);
+          Get.snackbar('Feedback Received', 'Thank you for helping us improve our AI matching!');
+      },
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(icon, size: 14, color: AppTheme.textSecondary),
+      ),
+    );
   }
 }
 

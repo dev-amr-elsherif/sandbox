@@ -11,13 +11,15 @@ import '../../presentation/modules/main_shell/main_shell_binding.dart';
 import '../../presentation/modules/matches/match_results_view.dart';
 import '../../presentation/modules/matches/match_results_binding.dart';
 import '../../presentation/modules/dev_profile/public_profile_view.dart';
+import '../../presentation/modules/dev_projects/project_details_view.dart';
+import '../../presentation/modules/owner_projects/owner_project_manage_view.dart';
 
 class AppPages {
-  static const INITIAL = '/login';
+  static const initial = '/login';
 
   static final routes = [
     GetPage(
-      name: '/login',
+      name: AppPages.initial,
       page: () => const LoginView(),
       binding: AuthBinding(),
     ),
@@ -49,6 +51,14 @@ class AppPages {
     GetPage(
       name: '/public-profile',
       page: () => const PublicProfileView(),
+    ),
+    GetPage(
+      name: '/project-details',
+      page: () => const ProjectDetailsView(),
+    ),
+    GetPage(
+      name: '/owner-project-manage',
+      page: () => const OwnerProjectManageView(),
     ),
   ];
 }

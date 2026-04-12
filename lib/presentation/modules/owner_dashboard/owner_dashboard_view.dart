@@ -246,7 +246,7 @@ class OwnerDashboardView extends GetView<OwnerController> {
               ),
               const SizedBox(height: 16),
 
-              // Tech Stack
+              // Tech Stack input and suggestions
               Row(
                 children: [
                   Expanded(
@@ -258,22 +258,49 @@ class OwnerDashboardView extends GetView<OwnerController> {
                       ),
                       style: const TextStyle(color: AppTheme.textPrimary),
                       onSubmitted: (v) {
-                        controller.addTech(v);
-                        techController.clear();
+                        if (v.trim().isNotEmpty) {
+                          controller.addTech(v.trim());
+                          techController.clear();
+                        }
                       },
                     ),
                   ),
                   IconButton(
                     onPressed: () {
-                      controller.addTech(techController.text);
-                      techController.clear();
+                      if (techController.text.trim().isNotEmpty) {
+                        controller.addTech(techController.text.trim());
+                        techController.clear();
+                      }
                     },
                     icon: const Icon(Icons.add_circle_rounded,
                         color: AppTheme.primary),
                   ),
                 ],
               ),
-
+              const SizedBox(height: 12),
+              
+              // Predefined Suggestions
+              const Text('Suggestions:', style: TextStyle(color: AppTheme.textMuted, fontSize: 11)),
+              const SizedBox(height: 8),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  children: [
+                    'Flutter', 'React', 'Firebase', 'AI/ML', 'Node.js', 'Python', 'UI/UX', 'Kotlin', 'Swift'
+                  ].map((skill) => Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ActionChip(
+                      label: Text(skill, style: const TextStyle(fontSize: 11)),
+                      backgroundColor: AppTheme.surfaceLight,
+                      labelStyle: const TextStyle(color: AppTheme.textPrimary),
+                      onPressed: () => controller.addTech(skill),
+                      side: BorderSide(color: AppTheme.primary.withValues(alpha: 0.2)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    ),
+                  )).toList(),
+                ),
+              ),
               const SizedBox(height: 12),
               Obx(() => Wrap(
                     spacing: 8,
@@ -321,8 +348,7 @@ class _ProjectCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () =>
-          Get.find<OwnerController>().findDevelopersForProject(project),
+      onTap: () => Get.toNamed('/owner-project-manage', arguments: project),
       child: GlassCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

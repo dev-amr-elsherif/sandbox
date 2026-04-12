@@ -43,7 +43,7 @@ class ProfileView extends StatelessWidget {
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: AppTheme.primary.withOpacity(0.5), width: 2),
+            border: Border.all(color: AppTheme.primary.withValues(alpha: 0.5), width: 2),
           ),
           child: CircleAvatar(
             radius: 50,

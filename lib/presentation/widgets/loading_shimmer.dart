@@ -11,7 +11,7 @@ class MatchCardShimmer extends StatelessWidget {
       baseColor: AppTheme.surfaceLight,
       highlightColor: AppTheme.cardBg,
       child: Container(
-        height: 110,
+        height: 170,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: AppTheme.surfaceLight,
@@ -26,23 +26,27 @@ class MatchCardShimmer extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _ShimmerBox(width: 160, height: 16),
+                      _ShimmerBox(width: 140, height: 16),
                       const SizedBox(height: 8),
-                      _ShimmerBox(width: 100, height: 12),
+                      _ShimmerBox(width: 90, height: 12),
                     ],
                   ),
                 ),
-                _ShimmerBox(width: 56, height: 56, radius: 28),
+                _ShimmerBox(width: 44, height: 44, radius: 22),
               ],
             ),
             const SizedBox(height: 16),
+            _ShimmerBox(width: double.infinity, height: 12),
+            const SizedBox(height: 6),
+            _ShimmerBox(width: 200, height: 12),
+            const SizedBox(height: 16),
             Row(
               children: [
-                _ShimmerBox(width: 60, height: 22, radius: 11),
+                _ShimmerBox(width: 60, height: 20, radius: 10),
                 const SizedBox(width: 8),
-                _ShimmerBox(width: 80, height: 22, radius: 11),
+                _ShimmerBox(width: 80, height: 20, radius: 10),
                 const SizedBox(width: 8),
-                _ShimmerBox(width: 50, height: 22, radius: 11),
+                _ShimmerBox(width: 50, height: 20, radius: 10),
               ],
             ),
           ],

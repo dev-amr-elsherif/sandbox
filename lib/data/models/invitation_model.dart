@@ -10,7 +10,8 @@ class InvitationModel {
   final String receiverId;
   final String projectId;
   final String projectTitle;
-  final String status; // pending, accepted, declined
+  final String status; // pending, accepted, declined, cancellation_proposed, cancelled
+  final String? apologyNote;
   final DateTime timestamp;
 
   InvitationModel({
@@ -22,6 +23,7 @@ class InvitationModel {
     required this.projectId,
     required this.projectTitle,
     this.status = 'pending',
+    this.apologyNote,
     required this.timestamp,
   });
 
@@ -35,6 +37,7 @@ class InvitationModel {
       projectId: map['projectId'] ?? '',
       projectTitle: map['projectTitle'] ?? '',
       status: map['status'] ?? 'pending',
+      apologyNote: map['apologyNote'],
       timestamp: (map['timestamp'] as Timestamp).toDate(),
     );
   }
@@ -48,7 +51,11 @@ class InvitationModel {
       'projectId': projectId,
       'projectTitle': projectTitle,
       'status': status,
+      'apologyNote': apologyNote,
       'timestamp': FieldValue.serverTimestamp(),
     };
   }
 }
+
+
+

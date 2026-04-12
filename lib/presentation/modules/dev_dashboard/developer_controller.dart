@@ -4,6 +4,7 @@ import '../../../../data/models/project_model.dart';
 import '../../../../data/providers/firebase_provider.dart';
 import '../../../../data/services/gemini_service.dart';
 import '../../../../data/services/analytics_service.dart';
+import '../../../../data/services/github_service.dart';
 import '../auth/auth_controller.dart';
 
 class DeveloperController extends GetxController {
@@ -11,6 +12,7 @@ class DeveloperController extends GetxController {
   final FirebaseProvider _firebaseProvider = Get.find<FirebaseProvider>();
   final GeminiService _geminiService = Get.find<GeminiService>();
   final AnalyticsService _analytics = Get.find<AnalyticsService>();
+  final GithubService _githubService = GithubService();
 
   // ─── State ────────────────────────────────────────────────────────
   final RxList<ProjectModel> projects = <ProjectModel>[].obs;
@@ -56,16 +58,21 @@ class DeveloperController extends GetxController {
     }
   }
 
-  // تشغيل الذكاء الاصطناعي لمطابقة المطور مع المشاريع المتوفرة
+  // تشغيل الذكاء الاصطناعي لمطابقة المطور مع المشاريع المتوفرة مع مراعاة نشاط GitHub
   Future<void> _runAIMatching() async {
     if (_developer == null) return;
     await _analytics.logAIMatchRequested();
+
+    // جلب نشاط GitHub إذا كان متوفراً (اسم المستخدم مخزن حالياً في الاسم للحكاية، أو كحقل إضافي)
+    // سنفترض وجود حقل Github في البروفايل أو نستخدم الاسم كافتراض للمثال
+    final githubActivity = await _githubService.getUserActivity(_developer!.name.replaceAll(' ', ''));
 
     final List<Map<String, dynamic>> results = [];
     for (var project in projects) {
       final score = await _geminiService.calculateMatch(
         _developer!.skills.join(', '),
         project.description,
+        githubActivity: githubActivity,
       );
       results.add({
         'project': project,

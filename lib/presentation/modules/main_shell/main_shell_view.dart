@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'main_shell_controller.dart';
+import '../auth/auth_controller.dart';
 import '../../../core/theme/app_theme.dart';
 import '../ai_chat/ai_chat_view.dart';
 
@@ -18,13 +19,18 @@ class MainShellView extends GetView<MainShellController> {
                 index: controller.currentIndex.value,
                 children: controller.pages,
               )),
-          
-          // Floating AI Assistant Button
-          Positioned(
-            right: 20,
-            bottom: 100, // Above BottomNav
-            child: _buildFloatingAIButton(),
-          ),
+          // Floating AI Assistant Button (Only for Managers)
+          Obx(() {
+            final authController = Get.find<AuthController>();
+            if (authController.currentUser.value?.role != 'manager') {
+              return const SizedBox.shrink();
+            }
+            return Positioned(
+              right: 20,
+              bottom: 100, // Above BottomNav
+              child: _buildFloatingAIButton(),
+            );
+          }),
         ],
       ),
       bottomNavigationBar: _buildBottomNav(),
@@ -34,10 +40,10 @@ class MainShellView extends GetView<MainShellController> {
   Widget _buildBottomNav() {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.background.withOpacity(0.8),
+        color: AppTheme.background.withValues(alpha: 0.8),
         border: Border(
           top: BorderSide(
-            color: Colors.white.withOpacity(0.1),
+            color: Colors.white.withValues(alpha: 0.1),
             width: 0.5,
           ),
         ),
@@ -81,7 +87,7 @@ class MainShellView extends GetView<MainShellController> {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: AppTheme.primary.withOpacity(0.4),
+              color: AppTheme.primary.withValues(alpha: 0.4),
               blurRadius: 15,
               spreadRadius: 2,
             ),

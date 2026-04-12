@@ -70,7 +70,7 @@ class DevSyncApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       themeMode: ThemeMode.dark,
-      initialRoute: AppPages.INITIAL,
+      initialRoute: AppPages.initial,
       getPages: AppPages.routes,
       defaultTransition: Transition.fadeIn,
       transitionDuration: const Duration(milliseconds: 350),

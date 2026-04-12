@@ -1,4 +1,6 @@
 import 'package:get/get.dart';
+import 'package:flutter/material.dart';
+import 'dart:async';
 import '../../../../data/models/invitation_model.dart';
 import '../../../../data/providers/firebase_provider.dart';
 import '../auth/auth_controller.dart';
@@ -9,6 +11,10 @@ class DevInvitationsController extends GetxController {
 
   final RxList<InvitationModel> invitations = <InvitationModel>[].obs;
   final RxBool isLoading = true.obs;
+  final RxBool hasError = false.obs;
+  final RxString errorMessage = ''.obs;
+
+  StreamSubscription? _subscription;
 
   @override
   void onInit() {
@@ -16,15 +22,54 @@ class DevInvitationsController extends GetxController {
     _listenToInvitations();
   }
 
+  @override
+  void onClose() {
+    _subscription?.cancel();
+    super.onClose();
+  }
+
   void _listenToInvitations() {
     final user = _authController.currentUser.value;
-    if (user == null) return;
+    if (user == null) {
+      isLoading.value = false;
+      return;
+    }
 
     isLoading.value = true;
-    invitations.bindStream(_firebaseProvider.streamInvitations(user.uid));
+    hasError.value = false;
     
-    // Once stream starts, we set loading to false
-    ever(invitations, (_) => isLoading.value = false);
+    _subscription?.cancel();
+    _subscription = _firebaseProvider.streamInvitations(user.uid).listen(
+      (data) {
+        invitations.assignAll(data);
+        isLoading.value = false;
+      },
+      onError: (error) {
+        debugPrint('Error fetching invitations: $error');
+        hasError.value = true;
+        errorMessage.value = error.toString();
+        isLoading.value = false;
+      },
+    );
+  }
+
+  void retry() => _listenToInvitations();
+
+  Future<void> viewProjectDetails(String projectId) async {
+    try {
+      Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
+      final project = await _firebaseProvider.getProject(projectId);
+      Get.back(); // Close loading dialog
+      
+      if (project != null) {
+        Get.toNamed('/project-details', arguments: project);
+      } else {
+        Get.snackbar('Error', 'Project not found');
+      }
+    } catch (e) {
+      Get.back();
+      Get.snackbar('Error', 'Failed to fetch project details');
+    }
   }
 
   Future<void> acceptInvitation(InvitationModel invitation) async {
@@ -42,6 +87,26 @@ class DevInvitationsController extends GetxController {
       Get.snackbar('Declined', 'Invitation was declined.');
     } catch (e) {
       Get.snackbar('Error', 'Failed to decline invitation');
+    }
+  }
+
+  // الموافقة على طلب الإلغاء من المالك
+  Future<void> approveCancellation(InvitationModel invite) async {
+    try {
+      await _firebaseProvider.respondToCancellation(invite.id, true);
+      Get.snackbar('Project Cancelled', 'You have agreed to cancel this project.');
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to approve cancellation');
+    }
+  }
+
+  // رفض طلب الإلغاء (التمسك بالعمل)
+  Future<void> declineCancellation(InvitationModel invite) async {
+    try {
+      await _firebaseProvider.respondToCancellation(invite.id, false);
+      Get.snackbar('Feedback Sent', 'The owner has been notified that you wish to continue.');
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to decline cancellation');
     }
   }
 }
