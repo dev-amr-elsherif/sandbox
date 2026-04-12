@@ -65,14 +65,58 @@ class ProfileView extends StatelessWidget {
   }
 
   Widget _buildProfileCard(user) {
+    final skills = (user?.topAiSkills != null && user!.topAiSkills!.isNotEmpty) 
+        ? user.topAiSkills! 
+        : (user?.skills ?? []);
+
     return GlassCard(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildInfoRow(Icons.badge_rounded, 'Role', user?.role.toUpperCase() ?? 'NONE'),
           const Divider(color: Colors.white10, height: 32),
           _buildInfoRow(Icons.email_rounded, 'Email', user?.email ?? 'N/A'),
+          
+          if (user?.githubSeniority != null) ...[
+            const Divider(color: Colors.white10, height: 32),
+            _buildInfoRow(Icons.military_tech_rounded, 'GitHub Seniority', user!.githubSeniority!),
+          ],
+          
           const Divider(color: Colors.white10, height: 32),
-          _buildInfoRow(Icons.psychology_rounded, 'Skills', (user?.skills.isEmpty ?? true) ? 'Not set' : user!.skills.join(', ')),
+          const Text('Technical Expertise', style: TextStyle(color: AppTheme.primaryLight, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          if (skills.isEmpty)
+             Text('Not set', style: AppTheme.bodySmall.copyWith(color: AppTheme.textSecondary))
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: skills.map<Widget>((skill) => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppTheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.primary.withValues(alpha: 0.2)),
+                ),
+                child: Text(skill, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13)),
+              )).toList(),
+            ),
+
+          if (user?.aiBio != null) ...[
+            const Divider(color: Colors.white10, height: 32),
+            Row(
+              children: [
+                const Text('AI Generated Bio', style: TextStyle(color: AppTheme.primaryLight, fontWeight: FontWeight.bold)),
+                const SizedBox(width: 8),
+                const Icon(Icons.auto_awesome_rounded, color: Colors.amber, size: 16),
+              ]
+            ),
+            const SizedBox(height: 8),
+            Text(
+              user!.aiBio!,
+              style: AppTheme.bodyMedium,
+            ),
+          ]
         ],
       ),
     );

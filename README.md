@@ -4,6 +4,12 @@
 ## 🌟 Overview
 DevSync is a premium, AI-powered platform designed for developers to find high-impact collaborators for open-source and private projects. By leveraging **Google Gemini AI**, the platform moves beyond simple keyword Matching to analyze developer expertise through **GitHub Activity** and skill sets.
 
+## 🚀 Recent Architectural Updates
+- **Role-First Onboarding**: Complete UI overhaul replacing generic login screens with a luxurious, glassmorphism role-selector (Developer vs Project Manager).
+- **Native OAuth Flow**: Removed Firebase UI in favor of native Google Sign-In and GitHub OAuth token interception via Chrome Custom Tabs.
+- **Dedicated Python Backend (FastAPI)**: Successfully spun off heavy processing to a local Python server (`localhost:8000`).
+- **Instant Algorithmic GitHub Profiling**: Replaced slow GenAI constraints with a blazing-fast Python algorithmic engine that instantly reads GitHub metadata to dictate Seniority, compute Top Programming Languages, and construct automated professional Bios in milliseconds.
+
 ## 🤖 Core AI Implementation (Prompt Engineering)
 The platform features a sophisticated AI-driven discovery engine:
 - **Expertise Matching**: Uses a refined Gemini-1.5-flash prompt that evaluates a developer's real-world expertise by analyzing their **GitHub Repository activity**, top languages, and public contributions.
@@ -48,8 +54,8 @@ lib/
 
 ## 🛠 Tech Stack
 - **Framework**: Flutter (Dart)
-- **AI**: Google Generative AI (Gemini 1.5)
-- **Backend**: Firebase (Auth, Firestore, Messaging, Analytics, Remote Config)
+- **Local Backend API**: Python 3.12+ (FastAPI, Uvicorn, Pydantic)
+- **Cloud Backend**: Firebase (Auth, Firestore, Messaging, Analytics, Remote Config)
 - **Analytics**: Real-time event tracking and role-selection logging.
 - **State Management**: GetX (Performance & Navigation)
 

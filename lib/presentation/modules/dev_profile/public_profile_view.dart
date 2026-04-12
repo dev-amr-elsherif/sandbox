@@ -88,30 +88,57 @@ class _PublicProfileViewState extends State<PublicProfileView> {
   }
 
   Widget _buildBioCard() {
+    final skills = (developer.topAiSkills != null && developer.topAiSkills!.isNotEmpty) 
+        ? developer.topAiSkills! 
+        : developer.skills;
+
     return GlassCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (developer.githubSeniority != null) ...[
+            Row(
+              children: [
+                const Icon(Icons.military_tech_rounded, color: AppTheme.primary, size: 24),
+                const SizedBox(width: 8),
+                Text('GitHub Seniority: ${developer.githubSeniority}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+              ]
+            ),
+            const Divider(color: Colors.white10, height: 32),
+          ],
+          
           const Text('Technical Expertise', style: TextStyle(color: AppTheme.primaryLight, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: developer.skills.map((skill) => Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppTheme.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.primary.withValues(alpha: 0.2)),
-              ),
-              child: Text(skill, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13)),
-            )).toList(),
-          ),
+          if (skills.isEmpty)
+             Text('Not set', style: AppTheme.bodySmall.copyWith(color: AppTheme.textSecondary))
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: skills.map<Widget>((skill) => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppTheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.primary.withValues(alpha: 0.2)),
+                ),
+                child: Text(skill, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13)),
+              )).toList(),
+            ),
+            
           const Divider(color: Colors.white10, height: 40),
-          const Text('Bio', style: TextStyle(color: AppTheme.primaryLight, fontWeight: FontWeight.bold)),
+          Row(
+            children: [
+              Text(developer.aiBio != null ? 'AI Generated Bio' : 'Bio', style: const TextStyle(color: AppTheme.primaryLight, fontWeight: FontWeight.bold)),
+              if (developer.aiBio != null) ...[
+                const SizedBox(width: 8),
+                const Icon(Icons.auto_awesome_rounded, color: Colors.amber, size: 16),
+              ]
+            ]
+          ),
           const SizedBox(height: 8),
           Text(
-            'Experienced developer with a strong background in ${developer.skills.take(2).join(' and ')}. Specialized in building high-performance applications.',
+            developer.aiBio ?? 'Experienced developer specialized in building high-performance applications.',
             style: AppTheme.bodyMedium,
           ),
         ],

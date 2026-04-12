@@ -1,7 +1,6 @@
 import 'package:get/get.dart';
 import '../../presentation/modules/auth/auth_binding.dart';
-import '../../presentation/modules/auth/login_view.dart';
-import '../../presentation/modules/auth/role_selection_view.dart';
+import '../../presentation/modules/auth/onboarding_view.dart';
 import '../../presentation/modules/dev_dashboard/developer_binding.dart';
 import '../../presentation/modules/dev_dashboard/developer_dashboard_view.dart';
 import '../../presentation/modules/owner_dashboard/owner_binding.dart';
@@ -15,17 +14,12 @@ import '../../presentation/modules/dev_projects/project_details_view.dart';
 import '../../presentation/modules/owner_projects/owner_project_manage_view.dart';
 
 class AppPages {
-  static const initial = '/login';
+  static const initial = '/onboarding';
 
   static final routes = [
     GetPage(
       name: AppPages.initial,
-      page: () => const LoginView(),
-      binding: AuthBinding(),
-    ),
-    GetPage(
-      name: '/role-selection',
-      page: () => const RoleSelectionView(),
+      page: () => const OnboardingView(),
       binding: AuthBinding(),
     ),
     GetPage(
