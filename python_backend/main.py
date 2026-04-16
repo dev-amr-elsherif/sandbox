@@ -19,6 +19,9 @@ class AnalyzeResponse(BaseModel):
     aiBio: str
     githubSeniority: str
     topAiSkills: list[str]
+    publicRepos: int
+    followers: int
+    accountAgeYears: int
 
 @app.post("/analyze", response_model=AnalyzeResponse)
 async def analyze_github_profile(request: AnalyzeRequest):
@@ -38,7 +41,10 @@ async def analyze_github_profile(request: AnalyzeRequest):
             githubUrl=f"https://github.com/{request.username}",
             aiBio=ai_result.aiBio,
             githubSeniority=ai_result.githubSeniority,
-            topAiSkills=ai_result.topAiSkills
+            topAiSkills=ai_result.topAiSkills,
+            publicRepos=ai_result.publicRepos,
+            followers=ai_result.followers,
+            accountAgeYears=ai_result.accountAgeYears
         )
     except Exception as e:
         logger.error(f"Error analyzing profile: {str(e)}")

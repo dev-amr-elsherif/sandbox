@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:get/get.dart';
-import '../../../../core/services/github_analyzer_service.dart';
+import 'analysis_loading_view.dart';
 import '../../../../data/models/user_model.dart';
 import '../../../../data/providers/firebase_provider.dart';
 import '../../../../data/services/analytics_service.dart';
@@ -68,31 +68,92 @@ class AuthController extends GetxController {
       debugPrint('DEBUG: FirebaseAuth signIn success. UID: ${credential.user?.uid}');
       
       if (credential.user != null) {
-        final profile = credential.additionalUserInfo?.profile;
-        Map<String, dynamic>? aiAnalysis;
-        
-        if (profile != null) {
-          debugPrint('DEBUG: GitHub Profile found. Login: ${profile['login']}');
-          try {
-            final analyzer = GithubAnalyzerService();
-            aiAnalysis = analyzer.analyzeProfileData(profile);
-            debugPrint('DEBUG: Local GitHub profile analysis success');
-            Get.snackbar('Success', 'Profile analyzed successfully!');
-          } catch (e) {
-            debugPrint('DEBUG: GitHub analysis failed: $e');
-          }
-        } else {
-          debugPrint('DEBUG: WARNING - AdditionalUserInfo profile is null');
-        }
+        // Check if user already exists and has portfolio data
+        UserModel? existingUser;
+        try {
+          existingUser = await _firebaseProvider.getUser(credential.user!.uid);
+        } catch (_) {}
 
-        // Force create/update profile as Developer
-        debugPrint('DEBUG: Saving profile to developers collection...');
-        await _createOrUpdateProfile(credential.user!, 'developer', aiAnalysis: aiAnalysis);
-        debugPrint('DEBUG: Profile saved successfully');
+        // Only do analysis if it's a new user or missing GitHub data
+        final needsAnalysis = existingUser == null || existingUser.githubUrl == null;
+
+        if (needsAnalysis) {
+          final profile = credential.additionalUserInfo?.profile;
+          if (profile != null) {
+            debugPrint('DEBUG: GitHub Profile found for analysis. Login: ${profile['login']}');
+            
+            // Get the access token from the credential safely
+            String? token;
+            final cred = credential.credential;
+            
+            if (cred != null) {
+              try {
+                // Safely grab the access token if the underlying platform object has it
+                token = (cred as dynamic).accessToken;
+                debugPrint('DEBUG: Successfully retrieved access token inside dynamic cast');
+              } catch (e) {
+                debugPrint('DEBUG: Credential does not have an accessToken property: $e');
+              }
+            }
+            
+            if (token != null) {
+              // Navigate to Loading View for AI Analysis
+              Get.to(() => AnalysisLoadingView(
+                username: profile['login']?.toString() ?? 'developer',
+                token: token!,
+              ));
+              return; // Exit here, let AnalysisLoadingView handle completion
+            } else {
+              debugPrint('DEBUG: Failed to get GitHub Access Token. Credential type: ${cred.runtimeType}');
+            }
+          }
+        }
+        
+        // Fallback or existing user login (skip analysis)
+        await _createOrUpdateProfile(credential.user!, 'developer');
       }
     } catch (e) {
       debugPrint('DEBUG: GitHub Login Error - Type: ${e.runtimeType}, Details: $e');
       Get.snackbar('Authentication Failed', 'Could not sign in with GitHub: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> refreshDeveloperPortfolio() async {
+    try {
+      isLoading.value = true;
+      debugPrint('DEBUG: Starting GitHub Refresh flow...');
+      final GithubAuthProvider githubProvider = GithubAuthProvider();
+      
+      final UserCredential credential = await _auth.signInWithProvider(githubProvider);
+      
+      if (credential.user != null) {
+        final profile = credential.additionalUserInfo?.profile;
+        if (profile != null) {
+          String? token;
+          final cred = credential.credential;
+          if (cred != null) {
+            try {
+              token = (cred as dynamic).accessToken;
+            } catch (e) {
+              debugPrint('DEBUG: Credential does not have an accessToken property: $e');
+            }
+          }
+          
+          if (token != null) {
+            Get.to(() => AnalysisLoadingView(
+              username: profile['login']?.toString() ?? 'developer',
+              token: token!,
+            ));
+            return;
+          }
+        }
+        Get.snackbar('Error', 'Unable to retrieve GitHub Data. Please try again.');
+      }
+    } catch (e) {
+      debugPrint('DEBUG: GitHub Refresh Error - Type: ${e.runtimeType}, Details: $e');
+      Get.snackbar('Refresh Failed', 'Could not refresh from GitHub: $e');
     } finally {
       isLoading.value = false;
     }
@@ -187,6 +248,13 @@ class AuthController extends GetxController {
     } else {
       // Fallback if role is somehow invalid
       Get.offAllNamed('/onboarding');
+    }
+  }
+
+  Future<void> completeDeveloperProfile(Map<String, dynamic> aiAnalysis) async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      await _createOrUpdateProfile(user, 'developer', aiAnalysis: aiAnalysis);
     }
   }
 
