@@ -18,7 +18,11 @@ class OwnerController extends GetxController {
   final RxBool isLoading = true.obs;
   final RxBool isFindingDevelopers = false.obs;
   final RxBool isCreatingProject = false.obs;
+  final RxBool isRefining = false.obs;
   final Rx<ProjectModel?> selectedProject = Rx<ProjectModel?>(null);
+  
+  // خريطة لتخزين عدد طلبات الانضمام المعلقة لكل مشروع {projectId: count}
+  final RxMap<String, int> pendingJoinRequests = <String, int>{}.obs;
 
   // ─── Form State ───────────────────────────────────────────────────
   final RxString projectTitle = ''.obs;
@@ -45,6 +49,15 @@ class OwnerController extends GetxController {
       Get.snackbar('Error', 'Failed to load projects');
     } finally {
       isLoading.value = false;
+      _loadPendingCounts();
+    }
+  }
+
+  Future<void> _loadPendingCounts() async {
+    for (var project in myProjects) {
+      final invites = await _firebaseProvider.getInvitationsByProject(project.id);
+      final count = invites.where((i) => i.status == 'join_request').length;
+      pendingJoinRequests[project.id] = count;
     }
   }
 
@@ -130,6 +143,59 @@ class OwnerController extends GetxController {
   }
 
   void removeTech(String tech) => techStack.remove(tech);
+
+  Future<void> refineProjectWithAI() async {
+    if (projectTitle.value.trim().isEmpty) {
+       Get.snackbar('Idea Needed', 'Please type a basic idea or title first (e.g., Pharmacy App)');
+       return;
+    }
+
+    try {
+      isRefining.value = true;
+      final result = await GeminiService().expandProjectIdea(projectTitle.value);
+      if (result != null) {
+        projectTitle.value = result['title'] ?? projectTitle.value;
+        projectDescription.value = result['description'] ?? projectDescription.value;
+        if (result['techStack'] != null) {
+          techStack.assignAll(List<String>.from(result['techStack']));
+        }
+        await _analytics.logProjectDescriptionGenerated();
+      }
+    } catch (e) {
+      Get.snackbar('AI Busy', 'Could not refine at this moment. Please try manual entry.');
+    } finally {
+      isRefining.value = false;
+    }
+  }
+
+  // ─── Project Templates ──────────────────────────────────────────
+  void applyTemplate(String type) {
+    switch (type) {
+      case 'Mobile App':
+        projectTitle.value = 'Cross-Platform Mobile Application';
+        projectDescription.value = 'Design and develop a high-performance mobile app for iOS and Android. Focus on smooth animations, offline-first capabilities, and a premium user experience.';
+        techStack.assignAll(['Flutter', 'Dart', 'Firebase', 'Git', 'Clean Architecture']);
+        break;
+      case 'Web Platform':
+        projectTitle.value = 'Scalable Web Application';
+        projectDescription.value = 'Build a responsive, multi-page web platform with modern frontend frameworks and a robust backend. Requirements include SEO optimization and secure user authentication.';
+        techStack.assignAll(['React', 'Node.js', 'PostgreSQL', 'Tailwind CSS', 'Redux']);
+        break;
+      case 'AI Engine':
+        projectTitle.value = 'AI Integration & Automation';
+        projectDescription.value = 'Integrate Large Language Models (LLMs) into existing workflows. Developing custom agents, prompt engineering pipelines, and data processing vectors.';
+        techStack.assignAll(['Python', 'OpenAI API', 'LangChain', 'Pinecone', 'FastAPI']);
+        break;
+      case 'E-Commerce':
+        projectTitle.value = 'Premium Digital Storefront';
+        projectDescription.value = 'A secure and highly scalable e-commerce solution with integrated payment gateways, real-time inventory tracking, and an admin dashboard.';
+        techStack.assignAll(['Next.js', 'Stripe', 'Prisma', 'Supabase', 'TypeScript']);
+        break;
+    }
+    Get.snackbar('Template Applied', 'Draft has been populated for $type', 
+        backgroundColor: Get.theme.primaryColor.withValues(alpha: 0.1), 
+        colorText: Get.theme.primaryColor);
+  }
 
   UserModel? get owner => _owner;
 }

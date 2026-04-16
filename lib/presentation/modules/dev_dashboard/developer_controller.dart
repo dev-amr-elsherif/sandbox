@@ -45,7 +45,8 @@ class DeveloperController extends GetxController {
       
       // Fetching projects
       final snapshot = await _firebaseProvider.getProjects();
-      projects.assignAll(snapshot);
+      // فلتر فقط المشاريع النشطة — لا تظهر المشاريع المنتهية/الملغاة
+      projects.assignAll(snapshot.where((p) => p.status == 'active').toList());
 
       if (_developer != null && projects.isNotEmpty) {
         await _runAIMatching();

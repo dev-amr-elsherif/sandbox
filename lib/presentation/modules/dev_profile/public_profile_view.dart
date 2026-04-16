@@ -107,6 +107,21 @@ class _PublicProfileViewState extends State<PublicProfileView> {
             const Divider(color: Colors.white10, height: 32),
           ],
           
+          if (developer.publicRepos != null || developer.followers != null) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                if (developer.publicRepos != null)
+                  _buildStatColumn(Icons.source_rounded, 'Repos', developer.publicRepos!.toString()),
+                if (developer.followers != null)
+                  _buildStatColumn(Icons.people_alt_rounded, 'Followers', developer.followers!.toString()),
+                if (developer.accountAgeYears != null && developer.accountAgeYears! > 0)
+                  _buildStatColumn(Icons.calendar_today_rounded, 'Years', developer.accountAgeYears!.toString()),
+              ],
+            ),
+            const Divider(color: Colors.white10, height: 32),
+          ],
+          
           const Text('Technical Expertise', style: TextStyle(color: AppTheme.primaryLight, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           if (skills.isEmpty)
@@ -129,10 +144,10 @@ class _PublicProfileViewState extends State<PublicProfileView> {
           const Divider(color: Colors.white10, height: 40),
           Row(
             children: [
-              Text(developer.aiBio != null ? 'AI Generated Bio' : 'Bio', style: const TextStyle(color: AppTheme.primaryLight, fontWeight: FontWeight.bold)),
+              Text(developer.aiBio != null ? 'GitHub Bio' : 'Bio', style: const TextStyle(color: AppTheme.primaryLight, fontWeight: FontWeight.bold)),
               if (developer.aiBio != null) ...[
                 const SizedBox(width: 8),
-                const Icon(Icons.auto_awesome_rounded, color: Colors.amber, size: 16),
+                const Icon(Icons.info_outline_rounded, color: Colors.amber, size: 16),
               ]
             ]
           ),
@@ -143,6 +158,17 @@ class _PublicProfileViewState extends State<PublicProfileView> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildStatColumn(IconData icon, String label, String value) {
+    return Column(
+      children: [
+        Icon(icon, color: AppTheme.primaryLight, size: 28),
+        const SizedBox(height: 8),
+        Text(value, style: AppTheme.headlineMedium.copyWith(fontSize: 20)),
+        Text(label, style: AppTheme.bodySmall.copyWith(color: AppTheme.textSecondary)),
+      ],
     );
   }
 
@@ -190,6 +216,8 @@ class _PublicProfileViewState extends State<PublicProfileView> {
         senderName: currentUser.name,
         senderPhotoUrl: currentUser.photoUrl,
         receiverId: developer.uid,
+        receiverName: developer.name,
+        receiverPhotoUrl: developer.photoUrl,
         projectId: projectContext!.id,
         projectTitle: projectContext!.title,
         timestamp: DateTime.now(),

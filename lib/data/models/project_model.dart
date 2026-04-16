@@ -11,6 +11,7 @@ class ProjectModel {
   final String? repoUrl;
   final String? websiteUrl;
   final String status;
+  final String internalNotes;
 
   ProjectModel({
     required this.id,
@@ -23,6 +24,7 @@ class ProjectModel {
     this.repoUrl,
     this.websiteUrl,
     this.status = 'active',
+    this.internalNotes = '',
   });
 
   factory ProjectModel.fromMap(Map<String, dynamic> map) {
@@ -37,6 +39,7 @@ class ProjectModel {
       repoUrl: map['repoUrl'],
       websiteUrl: map['websiteUrl'],
       status: map['status'] ?? 'active',
+      internalNotes: map['internalNotes'] ?? '',
     );
   }
 
@@ -52,6 +55,7 @@ class ProjectModel {
       'repoUrl': repoUrl,
       'websiteUrl': websiteUrl,
       'status': status,
+      'internalNotes': internalNotes,
     };
   }
 }

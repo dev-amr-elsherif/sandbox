@@ -47,7 +47,9 @@ class AuthController extends GetxController {
     try {
       final userModel = await _firebaseProvider.getUser(firebaseUser.uid);
       if (userModel != null) {
-        // User already exists, just update local state and navigate
+        // Migration check: saveUser will move them to the correct collection if they aren't there
+        await _firebaseProvider.saveUser(userModel);
+        
         currentUser.value = userModel;
         _navigateBasedOnRole(userModel);
       }
@@ -59,52 +61,37 @@ class AuthController extends GetxController {
   Future<void> loginAsDeveloper() async {
     try {
       isLoading.value = true;
+      debugPrint('DEBUG: Starting GitHub Login flow...');
       final GithubAuthProvider githubProvider = GithubAuthProvider();
       
       final UserCredential credential = await _auth.signInWithProvider(githubProvider);
+      debugPrint('DEBUG: FirebaseAuth signIn success. UID: ${credential.user?.uid}');
       
       if (credential.user != null) {
-        String? token;
-        String? githubUsername;
-        
-        if (credential.credential != null && credential.credential is OAuthCredential) {
-          final oauthCred = credential.credential as OAuthCredential;
-          token = oauthCred.accessToken;
-          githubUsername = credential.additionalUserInfo?.profile?['login']?.toString();
-          debugPrint('DEBUG: GitHub Login Success. Token: ${token != null ? 'EXISTS' : 'NULL'}, Username: $githubUsername');
-        } else {
-          debugPrint('DEBUG: credential.credential is null or not OAuthCredential. It is: ${credential.credential.runtimeType}');
-        }
-
+        final profile = credential.additionalUserInfo?.profile;
         Map<String, dynamic>? aiAnalysis;
         
-        if (token != null && githubUsername != null) {
+        if (profile != null) {
+          debugPrint('DEBUG: GitHub Profile found. Login: ${profile['login']}');
           try {
             final analyzer = GithubAnalyzerService();
-            aiAnalysis = await analyzer.analyzeProfile(githubUsername, token);
-            Get.snackbar('Success', 'AI Portfolio built successfully!');
-          } catch (backendError) {
-            debugPrint('GitHub analysis failed: $backendError');
-            
-            // Abort the login process
-            await _auth.signOut();
-            
-            Get.snackbar(
-              'GitHub Error', 
-              'Failed to analyze your GitHub profile. Check your internet connection or GitHub status.',
-              backgroundColor: const Color(0xFFB00020).withValues(alpha: 0.8),
-              colorText: const Color(0xFFFFFFFF),
-              duration: const Duration(seconds: 6),
-            );
-            return; // Stop the flow
+            aiAnalysis = analyzer.analyzeProfileData(profile);
+            debugPrint('DEBUG: Local GitHub profile analysis success');
+            Get.snackbar('Success', 'Profile analyzed successfully!');
+          } catch (e) {
+            debugPrint('DEBUG: GitHub analysis failed: $e');
           }
+        } else {
+          debugPrint('DEBUG: WARNING - AdditionalUserInfo profile is null');
         }
 
         // Force create/update profile as Developer
+        debugPrint('DEBUG: Saving profile to developers collection...');
         await _createOrUpdateProfile(credential.user!, 'developer', aiAnalysis: aiAnalysis);
+        debugPrint('DEBUG: Profile saved successfully');
       }
     } catch (e) {
-      debugPrint('GitHub Login Error: $e');
+      debugPrint('DEBUG: GitHub Login Error - Type: ${e.runtimeType}, Details: $e');
       Get.snackbar('Authentication Failed', 'Could not sign in with GitHub: $e');
     } finally {
       isLoading.value = false;
@@ -143,7 +130,14 @@ class AuthController extends GetxController {
 
   Future<void> _createOrUpdateProfile(User firebaseUser, String role, {Map<String, dynamic>? aiAnalysis}) async {
     try {
-      final existingUser = await _firebaseProvider.getUser(firebaseUser.uid);
+      debugPrint('DEBUG: Fetching existing user for UID: ${firebaseUser.uid}');
+      UserModel? existingUser;
+      try {
+        existingUser = await _firebaseProvider.getUser(firebaseUser.uid);
+        debugPrint('DEBUG: Existing user check complete. Found: ${existingUser != null}');
+      } catch (e) {
+        debugPrint('DEBUG: Non-fatal error fetching existing user: $e');
+      }
       
       final UserModel userModel = UserModel(
         uid: firebaseUser.uid,
@@ -156,16 +150,27 @@ class AuthController extends GetxController {
         aiBio: aiAnalysis?['aiBio'] ?? existingUser?.aiBio,
         githubSeniority: aiAnalysis?['githubSeniority'] ?? existingUser?.githubSeniority,
         topAiSkills: aiAnalysis != null ? List<String>.from(aiAnalysis['topAiSkills'] ?? []) : existingUser?.topAiSkills,
+        publicRepos: aiAnalysis?['publicRepos'] ?? existingUser?.publicRepos,
+        followers: aiAnalysis?['followers'] ?? existingUser?.followers,
+        accountAgeYears: aiAnalysis?['accountAgeYears'] ?? existingUser?.accountAgeYears,
       );
 
+      debugPrint('DEBUG: Attempting to save user to collection: ${role == 'owner' ? 'owners' : 'developers'}');
       await _firebaseProvider.saveUser(userModel);
+      debugPrint('DEBUG: User saved successfully to Firestore');
+
       currentUser.value = userModel;
       await _analytics.logRoleSelected(role);
       
       _navigateBasedOnRole(userModel);
     } catch (e) {
-      debugPrint('Error creating profile: $e');
-      Get.snackbar('Error', 'Failed to configure your profile.');
+      debugPrint('DEBUG: CRITICAL ERROR in _createOrUpdateProfile: $e');
+      if (e.toString().contains('permission-denied')) {
+        Get.snackbar('Database Error', 'Permission denied. Please check Firestore rules.', 
+          backgroundColor: Colors.red.withValues(alpha: 0.1), colorText: Colors.red);
+      } else {
+        Get.snackbar('Error', 'Failed to configure your profile: $e');
+      }
     }
   }
 

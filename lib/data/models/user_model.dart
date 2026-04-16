@@ -13,6 +13,11 @@ class UserModel {
   final String? aiBio;
   final String? githubSeniority;
   final List<String>? topAiSkills;
+  final int? publicRepos;
+  final int? followers;
+  final int? accountAgeYears;
+  final int ratingCount;
+  final double avgRating;
 
   UserModel({
     required this.uid,
@@ -25,6 +30,11 @@ class UserModel {
     this.aiBio,
     this.githubSeniority,
     this.topAiSkills,
+    this.publicRepos,
+    this.followers,
+    this.accountAgeYears,
+    this.ratingCount = 0,
+    this.avgRating = 0.0,
   });
 
   // تحويل البيانات الجاية من Firebase (Map) إلى كائن (Object) - مريح جداً للتعامل مع البيانات
@@ -40,6 +50,11 @@ class UserModel {
       aiBio: map['aiBio'],
       githubSeniority: map['githubSeniority'],
       topAiSkills: map['topAiSkills'] != null ? List<String>.from(map['topAiSkills']) : null,
+      publicRepos: map['publicRepos'],
+      followers: map['followers'],
+      accountAgeYears: map['accountAgeYears'],
+      ratingCount: map['ratingCount'] ?? 0,
+      avgRating: (map['avgRating'] ?? 0.0).toDouble(),
     );
   }
 
@@ -56,6 +71,11 @@ class UserModel {
       'aiBio': aiBio,
       'githubSeniority': githubSeniority,
       'topAiSkills': topAiSkills,
+      'publicRepos': publicRepos,
+      'followers': followers,
+      'accountAgeYears': accountAgeYears,
+      'ratingCount': ratingCount,
+      'avgRating': avgRating,
     };
   }
 }

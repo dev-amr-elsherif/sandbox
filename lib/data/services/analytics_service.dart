@@ -22,6 +22,9 @@ class AnalyticsService {
   Future<void> logProjectCreated(String projectTitle) =>
       _event('project_created', params: {'title': projectTitle});
   Future<void> logDeveloperSuggested() => _event('developer_suggested');
+  Future<void> logProjectDescriptionGenerated() => _event('project_ai_refined');
+  Future<void> logProjectTemplateApplied(String type) => 
+      _event('project_template_applied', params: {'type': type});
 
   // ─── Generic ──────────────────────────────────────────────────────
   Future<void> setUserId(String uid) => _analytics.setUserId(id: uid);

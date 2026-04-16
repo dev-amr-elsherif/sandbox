@@ -56,6 +56,26 @@ class ProfileView extends StatelessWidget {
           user?.name ?? 'Developer',
           style: AppTheme.headlineMedium,
         ),
+        if (user?.role == 'developer' && user?.ratingCount != null && user!.ratingCount > 0) ...[
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ...List.generate(5, (index) {
+                return Icon(
+                  index < user.avgRating.floor() ? Icons.star_rounded : (index < user.avgRating ? Icons.star_half_rounded : Icons.star_outline_rounded),
+                  color: Colors.amber,
+                  size: 18,
+                );
+              }),
+              const SizedBox(width: 8),
+              Text(
+                '${user.avgRating.toStringAsFixed(1)} (${user.ratingCount} reviews)',
+                style: AppTheme.bodySmall.copyWith(color: AppTheme.primaryLight, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ],
         Text(
           user?.email ?? '',
           style: AppTheme.bodyMedium.copyWith(color: AppTheme.textSecondary),
@@ -80,6 +100,21 @@ class ProfileView extends StatelessWidget {
           if (user?.githubSeniority != null) ...[
             const Divider(color: Colors.white10, height: 32),
             _buildInfoRow(Icons.military_tech_rounded, 'GitHub Seniority', user!.githubSeniority!),
+          ],
+
+          if (user?.publicRepos != null || user?.followers != null) ...[
+            const Divider(color: Colors.white10, height: 32),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                if (user?.publicRepos != null)
+                  _buildStatColumn(Icons.source_rounded, 'Repos', user!.publicRepos!.toString()),
+                if (user?.followers != null)
+                  _buildStatColumn(Icons.people_alt_rounded, 'Followers', user!.followers!.toString()),
+                if (user?.accountAgeYears != null && user!.accountAgeYears! > 0)
+                  _buildStatColumn(Icons.calendar_today_rounded, 'Years', user!.accountAgeYears!.toString()),
+              ],
+            ),
           ],
           
           const Divider(color: Colors.white10, height: 32),
@@ -106,9 +141,9 @@ class ProfileView extends StatelessWidget {
             const Divider(color: Colors.white10, height: 32),
             Row(
               children: [
-                const Text('AI Generated Bio', style: TextStyle(color: AppTheme.primaryLight, fontWeight: FontWeight.bold)),
+                const Text('GitHub Bio', style: TextStyle(color: AppTheme.primaryLight, fontWeight: FontWeight.bold)),
                 const SizedBox(width: 8),
-                const Icon(Icons.auto_awesome_rounded, color: Colors.amber, size: 16),
+                const Icon(Icons.info_outline_rounded, color: Colors.amber, size: 16),
               ]
             ),
             const SizedBox(height: 8),
@@ -134,6 +169,17 @@ class ProfileView extends StatelessWidget {
             Text(value, style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.bold)),
           ],
         ),
+      ],
+    );
+  }
+
+  Widget _buildStatColumn(IconData icon, String label, String value) {
+    return Column(
+      children: [
+        Icon(icon, color: AppTheme.primaryLight, size: 28),
+        const SizedBox(height: 8),
+        Text(value, style: AppTheme.headlineMedium.copyWith(fontSize: 20)),
+        Text(label, style: AppTheme.bodySmall.copyWith(color: AppTheme.textSecondary)),
       ],
     );
   }

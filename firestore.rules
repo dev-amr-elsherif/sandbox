@@ -2,47 +2,69 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ── Users ────────────────────────────────────────────────────────
-    match /users/{userId} {
-      // Only authenticated user can read/write their own document
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    // Helper: Is user authenticated
+    function isAuth() {
+      return request.auth != null;
+    }
 
-      // Other authenticated users can read basic profile (for matching)
-      // but NOT sensitive fields like githubAccessToken or fcmToken
-      allow read: if request.auth != null
-        && !('githubAccessToken' in resource.data)
-        && !('fcmToken' in resource.data);
+    // Helper: Is this the user's own document
+    function isOwner(userId) {
+      return isAuth() && request.auth.uid == userId;
+    }
+
+    // ── Developers ───────────────────────────────────────────────────
+    match /developers/{userId} {
+      allow read: if isAuth(); 
+      allow write: if isOwner(userId);
+    }
+
+    // ── Owners ────────────────────────────────────────────────────────
+    match /owners/{userId} {
+      allow read: if isAuth();
+      allow write: if isOwner(userId);
+    }
+
+    // ── Legacy Users (Migration) ──────────────────────────────────────
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
     }
 
     // ── Projects ─────────────────────────────────────────────────────
     match /projects/{projectId} {
-      // Any authenticated user can read active projects
-      allow read: if request.auth != null && resource.data.status == 'active';
-
-      // Only the owner can create, update, delete
-      allow create: if request.auth != null
-        && request.resource.data.ownerId == request.auth.uid;
-
-      allow update, delete: if request.auth != null
-        && resource.data.ownerId == request.auth.uid;
+      allow read: if isAuth();
+      allow create: if isAuth() && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if isAuth() && (
+        resource.data.ownerId == request.auth.uid ||
+        // Allow updating status to 'ready_for_review' via trigger/app logic if sender is involved?
+        // Actually normally only owner updates project status.
+        resource.data.ownerId == request.auth.uid
+      );
     }
 
-    // ── Matches ──────────────────────────────────────────────────────
-    match /matches/{matchId} {
-      // Developers can only read matches where they are the developer
-      // AI reasoning is NEVER exposed to developers (no client access)
-      allow read: if false; // All match reads done server-side only
-
-      // Only server/Cloud Functions can write
-      allow write: if false;
+    // ── Invitations ──────────────────────────────────────────────────
+    match /invitations/{invitationId} {
+      allow read: if isAuth(); // For matching and browsing
+      allow create: if isAuth();
+      allow update: if isAuth() && (
+        request.auth.uid == resource.data.senderId || 
+        request.auth.uid == resource.data.receiverId
+      );
+      allow delete: if isAuth() && (
+        resource.data.senderId == request.auth.uid ||
+        resource.data.receiverId == request.auth.uid
+      );
     }
 
-    // ── Notifications ─────────────────────────────────────────────────
+    // ── Reviews ──────────────────────────────────────────────────────
+    match /reviews/{reviewId} {
+      allow read: if isAuth();
+      allow create: if isAuth() && request.resource.data.ownerId == request.auth.uid;
+    }
+
+    // ── Notifications (Legacy/Specific) ──────────────────────────────
     match /notifications/{notifId} {
-      // Cloud Functions write notifications, users can read their own
-      allow read: if request.auth != null
-        && resource.data.to == request.auth.token.fcm_token;
-      allow write: if false; // Server-side only
+      allow read: if isAuth();
+      allow write: if false; 
     }
   }
 }

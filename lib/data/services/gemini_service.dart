@@ -86,4 +86,35 @@ Return only a number between 0 and 100.
     debugPrint('DEBUG: Match $matchId marked as ${isAccurate ? 'Accurate' : 'Inaccurate'}');
     // Future: Save to Firestore for batch prompt tuning
   }
+
+  // ميزة "مهندس المشاريع" - تحويل فكرة بسيطة إلى مشروع متكامل
+  Future<Map<String, dynamic>?> expandProjectIdea(String miniConcept) async {
+    try {
+      final prompt = '''
+        Analyze the following project idea: "$miniConcept".
+        Expand it into a professional project draft for a developer recruitment platform.
+        Return ONLY a JSON object with:
+        "title": (A refined professional name)
+        "description": (A detailed 3-4 sentence scope of work)
+        "techStack": (A list of 5-8 relevant modern technologies)
+        
+        Ensure the output is strictly valid JSON.
+      ''';
+      
+      final content = [Content.text(prompt)];
+      final response = await _model.generateContent(content);
+      final text = response.text;
+      if (text == null) return null;
+
+      final jsonStart = text.indexOf('{');
+      final jsonEnd = text.lastIndexOf('}');
+      if (jsonStart == -1 || jsonEnd == -1) return null;
+      
+      final cleanJson = text.substring(jsonStart, jsonEnd + 1);
+      return jsonDecode(cleanJson) as Map<String, dynamic>;
+    } catch (e) {
+      debugPrint('DEBUG: Gemini expansion error: $e');
+      return null;
+    }
+  }
 }
