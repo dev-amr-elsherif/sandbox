@@ -18,6 +18,8 @@ class UserModel {
   final int? accountAgeYears;
   final int ratingCount;
   final double avgRating;
+  final String? location;
+  final List<dynamic>? topRepositories;
 
   UserModel({
     required this.uid,
@@ -35,6 +37,8 @@ class UserModel {
     this.accountAgeYears,
     this.ratingCount = 0,
     this.avgRating = 0.0,
+    this.location,
+    this.topRepositories,
   });
 
   // تحويل البيانات الجاية من Firebase (Map) إلى كائن (Object) - مريح جداً للتعامل مع البيانات
@@ -55,6 +59,8 @@ class UserModel {
       accountAgeYears: map['accountAgeYears'],
       ratingCount: map['ratingCount'] ?? 0,
       avgRating: (map['avgRating'] ?? 0.0).toDouble(),
+      location: map['location'],
+      topRepositories: map['topRepositories'] != null ? List<dynamic>.from(map['topRepositories']) : null,
     );
   }
 
@@ -76,6 +82,8 @@ class UserModel {
       'accountAgeYears': accountAgeYears,
       'ratingCount': ratingCount,
       'avgRating': avgRating,
+      'location': location,
+      'topRepositories': topRepositories,
     };
   }
 }

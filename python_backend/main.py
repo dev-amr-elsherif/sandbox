@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import logging
+from typing import List, Optional, Dict, Any
 from github_service import fetch_github_data
 from ai_service import analyze_developer_metrics
 
@@ -16,35 +17,39 @@ class AnalyzeRequest(BaseModel):
 
 class AnalyzeResponse(BaseModel):
     githubUrl: str
-    aiBio: str
     githubSeniority: str
-    topAiSkills: list[str]
+    aiBio: str
+    topAiSkills: List[str]
     publicRepos: int
     followers: int
     accountAgeYears: int
+    location: Optional[str] = None
+    topRepositories: Optional[List[Dict[str, Any]]] = None
 
 @app.post("/analyze", response_model=AnalyzeResponse)
 async def analyze_github_profile(request: AnalyzeRequest):
-    logger.info(f"Received analysis request for GitHub user: {request.username}")
-    
-    if not request.token:
-        raise HTTPException(status_code=400, detail="GitHub Access Token is required")
-        
     try:
+        logger.info(f"Received analysis request for GitHub user: {request.username}")
+        
+        if not request.token:
+            raise HTTPException(status_code=400, detail="GitHub Access Token is required")
+            
         # 1. Fetch data from github_service
-        metrics = fetch_github_data(request.username, request.token)
+        github_metrics = fetch_github_data(request.username, request.token)
         
         # 2. Process data with ai_service
-        ai_result = analyze_developer_metrics(metrics)
+        ai_result = analyze_developer_metrics(github_metrics)
         
         return AnalyzeResponse(
             githubUrl=f"https://github.com/{request.username}",
-            aiBio=ai_result.aiBio,
             githubSeniority=ai_result.githubSeniority,
+            aiBio=ai_result.aiBio,
             topAiSkills=ai_result.topAiSkills,
             publicRepos=ai_result.publicRepos,
             followers=ai_result.followers,
-            accountAgeYears=ai_result.accountAgeYears
+            accountAgeYears=ai_result.accountAgeYears,
+            location=ai_result.location,
+            topRepositories=ai_result.topRepositories
         )
     except Exception as e:
         logger.error(f"Error analyzing profile: {str(e)}")

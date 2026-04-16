@@ -46,16 +46,23 @@ def fetch_github_data(username: str, token: str):
                     account_age_years -= 1
             except Exception as e:
                 logger.error(f"Error parsing created_at: {e}")
+                
+    # Get actual github bio and location
+    github_bio = user_data.get('bio') if 'user_data' in locals() else None
+    location = user_data.get('location') if 'user_data' in locals() else None
     
     # Aggregate data
     languages = {}
     total_stars = 0
     topics = set()
+    valid_repos = []
     
     for repo in repos:
         # Ignore forks for primary skill assessment, unless you want them
         if repo.get('fork', False):
             continue
+            
+        valid_repos.append(repo)
             
         lang = repo.get('language')
         if lang:
@@ -66,6 +73,19 @@ def fetch_github_data(username: str, token: str):
         for topic in repo.get('topics', []):
             topics.add(topic)
 
+    # Sort valid_repos to get top 3 repositories by stars, then update date
+    sorted_repos = sorted(valid_repos, key=lambda x: (x.get('stargazers_count', 0), x.get('updated_at', '')), reverse=True)
+    top_repos_snips = []
+    for r in sorted_repos[:3]:
+        top_repos_snips.append({
+            "name": r.get('name'),
+            "description": r.get('description'),
+            "language": r.get('language'),
+            "stargazers_count": r.get('stargazers_count', 0),
+            "forks_count": r.get('forks_count', 0),
+            "html_url": r.get('html_url')
+        })
+
     # Simplified user snippet to send
     metrics = {
         "username": username,
@@ -74,7 +94,10 @@ def fetch_github_data(username: str, token: str):
         "language_distribution": languages,
         "repo_topics": list(topics),
         "followers": followers,
-        "account_age_years": account_age_years
+        "account_age_years": account_age_years,
+        "github_bio": github_bio,
+        "location": location,
+        "top_repos": top_repos_snips
     }
     
     logger.info(f"Metrics gathered: {metrics}")

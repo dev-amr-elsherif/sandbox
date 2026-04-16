@@ -214,6 +214,8 @@ class AuthController extends GetxController {
         publicRepos: aiAnalysis?['publicRepos'] ?? existingUser?.publicRepos,
         followers: aiAnalysis?['followers'] ?? existingUser?.followers,
         accountAgeYears: aiAnalysis?['accountAgeYears'] ?? existingUser?.accountAgeYears,
+        location: aiAnalysis?['location'] ?? existingUser?.location,
+        topRepositories: aiAnalysis?['topRepositories'] != null ? List<dynamic>.from(aiAnalysis!['topRepositories']) : existingUser?.topRepositories,
       );
 
       debugPrint('DEBUG: Attempting to save user to collection: ${role == 'owner' ? 'owners' : 'developers'}');
