@@ -38,6 +38,8 @@ class OwnerProjectManageController extends GetxController {
     if (args is ProjectModel) {
       project.value = args;
       _setupStream(args.id);
+      notesController.text = args.internalNotes;
+      await _loadProjectInvitations();
     } else if (args is String) {
       try {
         isLoading.value = true;
@@ -45,6 +47,8 @@ class OwnerProjectManageController extends GetxController {
         if (fetchedProject != null) {
           project.value = fetchedProject;
           _setupStream(args);
+          notesController.text = fetchedProject.internalNotes;
+          await _loadProjectInvitations();
         } else {
           Get.back();
           Get.snackbar('Error', 'Project not found');
@@ -54,11 +58,9 @@ class OwnerProjectManageController extends GetxController {
         Get.snackbar('Error', 'Failed to load project: $e');
       } finally {
         isLoading.value = false;
-        if (project.value != null) {
-          notesController.text = project.value!.internalNotes;
-          _loadProjectInvitations();
-        }
       }
+    } else {
+      isLoading.value = false;
     }
   }
 

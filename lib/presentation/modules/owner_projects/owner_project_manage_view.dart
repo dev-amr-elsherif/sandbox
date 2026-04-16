@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../data/models/invitation_model.dart';
+import '../../../../data/models/project_model.dart';
 import '../../../../data/providers/firebase_provider.dart';
 import '../../widgets/glass_card.dart';
 import 'owner_project_manage_controller.dart';
@@ -77,6 +78,37 @@ class OwnerProjectManageView extends StatelessWidget {
           children: [
             _buildStatsSection(controller),
             const SizedBox(height: 24),
+
+            // AI Discovery Shortcut
+            if (project.status == 'active')
+              GlassCard(
+                padding: const EdgeInsets.all(16),
+                borderColor: AppTheme.primary.withValues(alpha: 0.3),
+                onTap: () => Get.toNamed('/match-results', arguments: controller.project.value),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(color: AppTheme.primary.withValues(alpha: 0.1), shape: BoxShape.circle),
+                      child: const Icon(Icons.auto_awesome_rounded, color: AppTheme.primary, size: 24),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Expand Your Team', style: AppTheme.titleLarge.copyWith(fontSize: 16)),
+                          const SizedBox(height: 2),
+                          Text('Find more AI-matched developers for this project', style: AppTheme.bodySmall.copyWith(color: AppTheme.textSecondary)),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: AppTheme.primary),
+                  ],
+                ),
+              ).animate().shimmer(delay: const Duration(seconds: 1), duration: const Duration(seconds: 2)),
+
+            const SizedBox(height: 32),
 
             if (project.status == 'ready_for_review')
               _buildReviewCelebration(controller).animate().shimmer(duration: const Duration(seconds: 2)),
@@ -433,9 +465,33 @@ class _DeveloperStatusItem extends StatelessWidget {
                   child: Obx(() => Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        controller.developerNames[invite.receiverId] ?? 'Loading...', 
-                        style: AppTheme.titleLarge.copyWith(fontSize: 15)
+                      Row(
+                        children: [
+                          Text(
+                            controller.developerNames[invite.receiverId] ?? 'Loading...', 
+                            style: AppTheme.titleLarge.copyWith(fontSize: 15)
+                          ),
+                          const SizedBox(width: 8),
+                          if (invite.status != 'accepted')
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.north_east_rounded, size: 8, color: AppTheme.primary),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'SENT',
+                                    style: TextStyle(color: AppTheme.primary, fontSize: 8, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -531,9 +587,32 @@ class _JoinRequestItem extends StatelessWidget {
                   child: Obx(() => Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        controller.developerNames[invite.senderId] ?? 'Loading...',
-                        style: AppTheme.titleLarge.copyWith(fontSize: 14),
+                      Row(
+                        children: [
+                          Text(
+                            controller.developerNames[invite.senderId] ?? 'Loading...',
+                            style: AppTheme.titleLarge.copyWith(fontSize: 14),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppTheme.secondary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.south_west_rounded, size: 8, color: AppTheme.secondary),
+                                SizedBox(width: 4),
+                                Text(
+                                  'INCOMING',
+                                  style: TextStyle(color: AppTheme.secondary, fontSize: 8, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                       Text(
                         'Wants to join your project',

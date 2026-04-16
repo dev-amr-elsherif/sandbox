@@ -39,10 +39,10 @@ class ProjectsView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Recruitment Tracking', style: AppTheme.headlineLarge.copyWith(fontSize: 28)),
+          Text('My Engagements', style: AppTheme.headlineLarge.copyWith(fontSize: 28)),
           const SizedBox(height: 6),
           Text(
-            'Track invitations and your project requests.',
+            'Keep track of your active projects and progress.',
             style: AppTheme.bodyMedium.copyWith(color: AppTheme.textSecondary, fontSize: 12),
           ),
           const SizedBox(height: 16),

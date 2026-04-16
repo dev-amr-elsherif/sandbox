@@ -204,7 +204,7 @@ class _ProjectCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => Get.toNamed('/owner_project_manage', arguments: project),
+      onTap: () => Get.toNamed('/owner-project-manage', arguments: project),
       child: GlassCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -269,7 +269,7 @@ class _DeveloperMatchCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final UserModel developer = match['developer'];
-    final double score = match['score'];
+    final double score = (match['score'] as num).toDouble();
 
     return GestureDetector(
       onTap: () => Get.toNamed(

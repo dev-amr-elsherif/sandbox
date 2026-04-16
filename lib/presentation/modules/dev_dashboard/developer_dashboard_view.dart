@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../data/models/project_model.dart';
+import '../../../../data/models/invitation_model.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/loading_shimmer.dart';
 import '../../../../data/services/gemini_service.dart';
@@ -33,8 +34,7 @@ class DeveloperDashboardView extends GetView<DeveloperController> {
                 slivers: [
                   _buildAppBar(),
                   _buildStatsRow(),
-                  _buildMatchesSection(),
-                  const SliverToBoxAdapter(child: SizedBox(height: 32)),
+                  _buildInvitationsSection(),
                 ],
               ),
             ),
@@ -81,7 +81,7 @@ class DeveloperDashboardView extends GetView<DeveloperController> {
   Widget _buildStatsRow() {
     return SliverToBoxAdapter(
       child: Obx(() {
-        final invitesController = Get.find<DevInvitationsController>();
+        final invitesController = Get.put(DevInvitationsController());
         return Padding(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
           child: Column(
@@ -110,6 +110,52 @@ class DeveloperDashboardView extends GetView<DeveloperController> {
               ],
             ],
           ).animate().fadeIn().slideY(begin: 0.1),
+        );
+      }),
+    );
+  }
+
+  Widget _buildInvitationsSection() {
+    return SliverToBoxAdapter(
+      child: Obx(() {
+        if (controller.pendingInvitations.isEmpty) return const SizedBox.shrink();
+        
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Row(
+                  children: [
+                    const Icon(Icons.mail_outline_rounded, color: AppTheme.primary, size: 16),
+                    const SizedBox(width: 8),
+                    Text('NEW OPPORTUNITIES', style: AppTheme.bodySmall.copyWith(color: AppTheme.primary, letterSpacing: 1.5, fontWeight: FontWeight.bold)),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(color: AppTheme.primary, borderRadius: BorderRadius.circular(10)),
+                      child: Text('${controller.pendingInvitations.length}', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 140,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: controller.pendingInvitations.length,
+                  itemBuilder: (context, index) {
+                    final invite = controller.pendingInvitations[index];
+                    return _InvitationCard(invite: invite, controller: controller);
+                  },
+                ),
+              ),
+            ],
+          ),
         );
       }),
     );
@@ -164,159 +210,82 @@ class DeveloperDashboardView extends GetView<DeveloperController> {
       ],
     );
   }
-
-  Widget _buildMatchesSection() {
-    return Obx(() {
-      if (controller.isLoading.value && controller.matches.isEmpty) {
-        return SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (_, i) => const Padding(
-              padding: EdgeInsets.fromLTRB(20, 0, 20, 16),
-              child: MatchCardShimmer(),
-            ),
-            childCount: 5,
-          ),
-        );
-      }
-
-      if (controller.hasError.value) {
-        return SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 60),
-            child: AppEmptyState(
-              icon: Icons.error_outline_rounded,
-              title: 'Oops! Something went wrong',
-              subtitle: 'We couldn\'t load your matches. Please try again.',
-              action: OutlinedButton(
-                onPressed: controller.loadInitialData,
-                child: const Text('RETRY'),
-              ),
-            ),
-          ),
-        );
-      }
-
-      if (controller.matches.isEmpty) {
-        return const SliverFillRemaining(
-          hasScrollBody: false,
-          child: AppEmptyState(
-            icon: Icons.search_off_rounded,
-            title: 'No Matches Yet',
-            subtitle: 'Complete your profile or explore public projects to get started.',
-          ),
-        );
-      }
-
-      return SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            final match = controller.matches[index];
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-              child: _MatchCard(match: match, index: index),
-            );
-          },
-          childCount: controller.matches.length,
-        ),
-      );
-    });
-  }
 }
 
-class _MatchCard extends StatelessWidget {
-  final Map<String, dynamic> match;
-  final int index;
+class _InvitationCard extends StatelessWidget {
+  final InvitationModel invite;
+  final DeveloperController controller;
 
-  const _MatchCard({required this.match, required this.index});
+  const _InvitationCard({required this.invite, required this.controller});
 
   @override
   Widget build(BuildContext context) {
-    final ProjectModel project = match['project'];
-    final double score = match['score'];
-
-    return GestureDetector(
-      onTap: () => Get.toNamed('/project-details', arguments: project),
+    return Container(
+      width: 280,
+      margin: const EdgeInsets.only(right: 12),
       child: GlassCard(
+        padding: const EdgeInsets.all(16),
+        borderColor: AppTheme.primary.withValues(alpha: 0.2),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(project.title, style: AppTheme.headlineMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
-                      const SizedBox(height: 4),
-                      Text('By ${project.ownerName}', style: AppTheme.bodySmall.copyWith(color: AppTheme.textSecondary)),
-                    ],
-                  ),
+                CircleAvatar(
+                  radius: 14,
+                  backgroundImage: invite.senderPhotoUrl != null ? NetworkImage(invite.senderPhotoUrl!) : null,
+                  backgroundColor: AppTheme.surfaceLight,
+                  child: invite.senderPhotoUrl == null ? const Icon(Icons.person, size: 14) : null,
                 ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    MatchScoreBadge(score: score / 100),
-                    const SizedBox(height: 6),
-                    StatusBadge.projectStatus(project.status),
-                  ],
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    invite.senderName,
+                    style: AppTheme.bodySmall.copyWith(color: AppTheme.textSecondary, fontWeight: FontWeight.bold),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(
-              project.description,
-              style: AppTheme.bodyMedium.copyWith(color: AppTheme.textSecondary),
-              maxLines: 2,
+              invite.projectTitle,
+              style: AppTheme.titleLarge.copyWith(fontSize: 14),
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            if (project.techStack.isNotEmpty) ...[
-              const SizedBox(height: 14),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: project.techStack
-                    .take(4)
-                    .map((skill) => SkillChip(label: skill))
-                    .toList(),
-              ),
-            ],
-            const Divider(height: 32, color: Colors.white10),
+            const Spacer(),
             Row(
               children: [
-                Text('AI Accuracy Feedback', style: AppTheme.bodySmall.copyWith(fontSize: 10, color: AppTheme.textMuted)),
-                const Spacer(),
-                _FeedbackIcon(matchId: project.id, isUp: true),
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => controller.declineInvitation(invite),
+                    style: TextButton.styleFrom(foregroundColor: AppTheme.error, padding: EdgeInsets.zero),
+                    child: const Text('Decline', style: TextStyle(fontSize: 12)),
+                  ),
+                ),
                 const SizedBox(width: 8),
-                _FeedbackIcon(matchId: project.id, isUp: false),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => controller.acceptInvitation(invite),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primary.withValues(alpha: 0.1),
+                      foregroundColor: AppTheme.primary,
+                      elevation: 0,
+                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: const Text('Accept', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+                ),
               ],
             ),
           ],
         ),
       ),
-    ).animate(delay: (100 * index).ms).fadeIn().slideY(begin: 0.1);
+    ).animate().fadeIn().slideX(begin: 0.1);
   }
 }
 
-class _FeedbackIcon extends StatelessWidget {
-  final String matchId;
-  final bool isUp;
-  const _FeedbackIcon({required this.matchId, required this.isUp});
 
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () {
-        Get.find<GeminiService>().logMatchFeedback(matchId, isUp);
-        Get.snackbar('Feedback Received', 'Thanks for the feedback!', 
-          backgroundColor: AppTheme.primary.withValues(alpha: 0.1), colorText: Colors.white);
-      },
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.all(6),
-        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(8)),
-        child: Icon(isUp ? Icons.thumb_up_alt_rounded : Icons.thumb_down_alt_rounded, size: 14, color: AppTheme.textSecondary),
-      ),
-    );
-  }
-}

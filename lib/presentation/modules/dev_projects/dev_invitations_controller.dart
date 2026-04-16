@@ -20,7 +20,7 @@ class DevInvitationsController extends GetxController {
   final RxString errorMessage = ''.obs;
   
   // Filtering
-  final RxString selectedFilter = 'All'.obs;
+  final RxString selectedFilter = 'Active'.obs;
 
   // Stats Getters
   int get activeProjectsCount => invitations.where((i) => i.status == 'accepted').length + myJoinRequests.where((i) => i.status == 'accepted').length;

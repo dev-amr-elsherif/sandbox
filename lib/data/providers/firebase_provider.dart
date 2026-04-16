@@ -156,16 +156,20 @@ class FirebaseProvider {
         .update({'status': newStatus});
   }
 
-  // الاستماع للدعوات المرسلة وحالتها (لصاحب المشروع)
   Stream<List<InvitationModel>> streamSentInvitations(String ownerId) {
     return _firestore
         .collection('invitations')
         .where('senderId', isEqualTo: ownerId)
-        .orderBy('timestamp', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => InvitationModel.fromMap(doc.data(), doc.id))
-            .toList());
+        .map((snapshot) {
+      final List<InvitationModel> all = snapshot.docs
+          .map((doc) => InvitationModel.fromMap(doc.data(), doc.id))
+          .toList();
+
+      // Sort locally to avoid requiring composite indexes
+      all.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      return all;
+    });
   }
 
   // جلب كل الدعوات الخاصة بمشروع معين

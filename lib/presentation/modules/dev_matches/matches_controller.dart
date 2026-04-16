@@ -57,7 +57,8 @@ class MatchesController extends GetxController {
       final filteredProjects = allProjects.where((p) =>
         p.status == 'active' &&
         p.ownerId != _developer!.uid &&
-        !acceptedProjectIds.contains(p.id)
+        !acceptedProjectIds.contains(p.id) &&
+        !sentRequestIds.contains(p.id)
       ).toList();
 
       final devSkills = {
@@ -100,7 +101,7 @@ class MatchesController extends GetxController {
             };
           }).toList();
 
-          scored.sort((a, b) => (b['score'] as double).compareTo(a['score'] as double));
+          scored.sort((a, b) => ((b['score'] as num).toDouble()).compareTo((a['score'] as num).toDouble()));
           projectMatches.assignAll(scored);
         } else {
           throw Exception('Backend Matcher failed with code ${response.statusCode}');

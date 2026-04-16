@@ -40,7 +40,18 @@ class MatchResultsView extends GetView<MatchResultsController> {
             icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
           ),
           const SizedBox(width: 8),
-          Text('Ranked Developers', style: AppTheme.headlineLarge.copyWith(fontSize: 22)),
+          Expanded(
+            child: Text('Ranked Developers', style: AppTheme.headlineLarge.copyWith(fontSize: 22)),
+          ),
+          TextButton(
+            onPressed: () => Get.offAllNamed('/main-shell'),
+            style: TextButton.styleFrom(
+              foregroundColor: AppTheme.secondary,
+              backgroundColor: AppTheme.secondary.withValues(alpha: 0.1),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('FINISH', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
         ],
       ),
     );

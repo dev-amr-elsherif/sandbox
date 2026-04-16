@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:dio/dio.dart' as dio_lib;
 import 'package:flutter/foundation.dart';
@@ -7,6 +8,8 @@ import '../../../../data/providers/firebase_provider.dart';
 import '../../../../data/services/gemini_service.dart';
 import '../../../../data/services/analytics_service.dart';
 import '../auth/auth_controller.dart';
+
+import '../main_shell/main_shell_controller.dart';
 
 class OwnerController extends GetxController {
   // المحركات الأساسية لجلب البيانات وحساب المطابقة
@@ -63,6 +66,13 @@ class OwnerController extends GetxController {
     }
   }
 
+  // إعادة تعيين النموذج (Reset Form) للبدء من جديد
+  void resetForm() {
+    projectTitle.value = '';
+    projectDescription.value = '';
+    techStack.clear();
+  }
+
   // إنشاء مشروع جديد وحفظه في الفايربيز
   Future<void> createProject() async {
     if (projectTitle.value.trim().isEmpty) {
@@ -84,15 +94,21 @@ class OwnerController extends GetxController {
       );
 
       final created = await _firebaseProvider.createProject(project);
+      
+      // Update local state and logs
       myProjects.insert(0, created);
       await _analytics.logProjectCreated(created.title);
 
-      // Reset form
-      projectTitle.value = '';
-      projectDescription.value = '';
-      techStack.clear();
+      // ─── UX FIX: Reset Form & Switch Tab ───────────────────────────
+      resetForm();
+      // Switch the main shell tab back to 0 (Dashboard) in the background
+      if (Get.isRegistered<MainShellController>()) {
+        Get.find<MainShellController>().changePage(0);
+      }
 
       Get.snackbar('Success', 'Project created! finding best developers...',
+          backgroundColor: const Color(0xFF00E676).withValues(alpha: 0.1),
+          colorText: const Color(0xFF00C896),
           duration: const Duration(seconds: 2));
 
       // Navigate to recommendation results
@@ -128,35 +144,51 @@ class OwnerController extends GetxController {
         
         // Use Future.wait to make multiple calls to the backend in parallel for all developers
         await Future.wait(developers.map((dev) async {
-          final devSkills = {
-            ...(dev.topAiSkills ?? []),
-            ...dev.skills,
-          }.toList();
+          try {
+            final devSkills = {
+              ...(dev.topAiSkills ?? []),
+              ...dev.skills,
+            }.toList().map((s) => s.toString()).toList();
 
-          final response = await dio.post(
-            '$baseUrl/matches/calculate',
-            data: {
-              'devSkills': devSkills,
-              'devSeniority': dev.githubSeniority ?? 'Junior',
-              'projects': [{
-                'id': project.id,
-                'techStack': project.techStack,
-                'description': project.description,
-              }],
-            },
-          );
+            final response = await dio.post(
+              '$baseUrl/matches/calculate',
+              data: {
+                'devSkills': devSkills,
+                'devSeniority': dev.githubSeniority ?? 'Junior',
+                'projects': [{
+                  'id': project.id,
+                  'techStack': project.techStack,
+                  'description': project.description,
+                }],
+              },
+            );
 
-          if (response.statusCode == 200) {
-            final double score = response.data['matches'][0]['score'];
+            if (response.statusCode == 200) {
+              final List matches = response.data['matches'];
+              if (matches.isNotEmpty) {
+                final double scoreValue = (matches[0]['score'] as num).toDouble();
+                results.add({
+                  'developer': dev,
+                  'score': scoreValue,
+                });
+              }
+            }
+          } catch (e) {
+            debugPrint('Individual Matching Error for ${dev.name}: $e');
+            // Add a default low score if the specific dev calculation fails
             results.add({
               'developer': dev,
-              'score': score.toDouble(),
+              'score': 10.0,
             });
           }
         }));
 
-        results.sort((a, b) => (b['score'] as double).compareTo(a['score'] as double));
-        developerMatches.assignAll(results);
+        results.sort((a, b) => ((b['score'] as num).toDouble()).compareTo((a['score'] as num).toDouble()));
+        
+        // Filter out anyone with less than 20% match as requested
+        final filteredResults = results.where((r) => (r['score'] as num).toDouble() >= 20.0).toList();
+        
+        developerMatches.assignAll(filteredResults);
         await _analytics.logDeveloperSuggested();
       } catch (e) {
         debugPrint('Matching Error: $e');
