@@ -1,4 +1,6 @@
 import 'package:get/get.dart';
+import 'package:dio/dio.dart' as dio_lib;
+import 'package:flutter/foundation.dart';
 import '../../../../data/models/user_model.dart';
 import '../../../../data/models/project_model.dart';
 import '../../../../data/providers/firebase_provider.dart';
@@ -102,7 +104,6 @@ class OwnerController extends GetxController {
     }
   }
 
-  // ─── AI Developer Matching ────────────────────────────────────────
   Future<void> findDevelopersForProject(ProjectModel project) async {
     try {
       isFindingDevelopers.value = true;
@@ -112,21 +113,55 @@ class OwnerController extends GetxController {
       final developers = await _firebaseProvider.getDevelopers();
       if (developers.isEmpty) return;
 
-      final List<Map<String, dynamic>> results = [];
-      for (var dev in developers) {
-        final score = await _geminiService.calculateMatch(
-          dev.skills.join(', '),
-          project.description,
-        );
-        results.add({
-          'developer': dev,
-          'score': score,
-        });
+      try {
+        final dio = dio_lib.Dio();
+        final baseUrl = GetPlatform.isAndroid ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
+        
+        // We need to calculate scores for EVERY developer against ONE project.
+        // Our endpoint takes devSkills + seniority for ONE dev and Multiple Projects.
+        // So we can send a list of "faked" projects where the project is the same but the dev changes?
+        // OR: It's better to just call the endpoint for each dev if there aren't many,
+        // BUT for efficiency, let's just do it properly.
+        
+        // For now, to keep it simple and match the backend schema:
+        final List<Map<String, dynamic>> results = [];
+        
+        // Use Future.wait to make multiple calls to the backend in parallel for all developers
+        await Future.wait(developers.map((dev) async {
+          final devSkills = {
+            ...(dev.topAiSkills ?? []),
+            ...dev.skills,
+          }.toList();
+
+          final response = await dio.post(
+            '$baseUrl/matches/calculate',
+            data: {
+              'devSkills': devSkills,
+              'devSeniority': dev.githubSeniority ?? 'Junior',
+              'projects': [{
+                'id': project.id,
+                'techStack': project.techStack,
+                'description': project.description,
+              }],
+            },
+          );
+
+          if (response.statusCode == 200) {
+            final double score = response.data['matches'][0]['score'];
+            results.add({
+              'developer': dev,
+              'score': score.toDouble(),
+            });
+          }
+        }));
+
+        results.sort((a, b) => (b['score'] as double).compareTo(a['score'] as double));
+        developerMatches.assignAll(results);
+        await _analytics.logDeveloperSuggested();
+      } catch (e) {
+        debugPrint('Matching Error: $e');
+        Get.snackbar('Matching Error', 'The real-time matching engine is temporarily offline.');
       }
-      
-      results.sort((a, b) => (b['score'] as double).compareTo(a['score'] as double));
-      developerMatches.assignAll(results);
-      await _analytics.logDeveloperSuggested();
     } catch (e) {
       Get.snackbar('AI Error', 'Matching temporarily unavailable');
     } finally {

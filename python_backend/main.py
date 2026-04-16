@@ -4,6 +4,7 @@ import logging
 from typing import List, Optional, Dict, Any
 from github_service import fetch_github_data
 from ai_service import analyze_developer_metrics
+from matching_service import batch_calculate_matches
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
@@ -25,6 +26,23 @@ class AnalyzeResponse(BaseModel):
     accountAgeYears: int
     location: Optional[str] = None
     topRepositories: Optional[List[Dict[str, Any]]] = None
+
+class MatchProjectRequest(BaseModel):
+    id: str
+    techStack: List[str]
+    description: str = ""
+
+class MatchRequest(BaseModel):
+    devSkills: List[str]
+    devSeniority: str
+    projects: List[MatchProjectRequest]
+
+class MatchResult(BaseModel):
+    projectId: str
+    score: float
+
+class MatchResponse(BaseModel):
+    matches: List[MatchResult]
 
 @app.post("/analyze", response_model=AnalyzeResponse)
 async def analyze_github_profile(request: AnalyzeRequest):
@@ -53,7 +71,21 @@ async def analyze_github_profile(request: AnalyzeRequest):
         )
     except Exception as e:
         logger.error(f"Error analyzing profile: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal Server Error during analysis")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/matches/calculate", response_model=MatchResponse)
+async def calculate_matches(request: MatchRequest):
+    try:
+        logger.info(f"Calculating matches for {len(request.projects)} projects")
+        results = batch_calculate_matches(
+            dev_skills=request.devSkills,
+            dev_seniority=request.devSeniority,
+            projects=[p.dict() for p in request.projects]
+        )
+        return MatchResponse(matches=[MatchResult(**r) for r in results])
+    except Exception as e:
+        logger.error(f"Error calculating matches: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/")
 def read_root():
