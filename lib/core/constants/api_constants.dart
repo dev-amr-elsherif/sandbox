@@ -21,8 +21,13 @@ class ApiConstants {
   static const String rcGithubClientSecret = 'github_client_secret';
   static const String rcGeminiApiKey       = 'gemini_api_key';
   
-  // ── Gemini Key ────────────────────────────────────────────────
+  // ── Gemini Key (Deprecated) ───────────────────────────────────
   static const String geminiApiKey         = 'YOUR_GEMINI_API_KEY';
+
+  // ── Groq Key (Active) ──────────────────────────────────────────
+  static const String groqApiKey           = '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';
+  static const String groqBaseUrl          = 'https://api.groq.com/openai/v1';
+  static const String groqModel            = 'llama-3.3-70b-versatile';
 
   // ── Hive box names (Legacy/Unused) ─────────────────────────────
   static const String hiveMatchesBox  = 'matches_box';

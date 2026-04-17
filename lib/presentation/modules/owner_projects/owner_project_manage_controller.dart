@@ -40,7 +40,7 @@ class OwnerProjectManageController extends GetxController {
       _setupStream(args.id);
       notesController.text = args.internalNotes;
       await _loadProjectInvitations();
-    } else if (args is String) {
+    } else if (args is String && args.isNotEmpty) {
       try {
         isLoading.value = true;
         final fetchedProject = await _firebaseProvider.getProject(args);
@@ -50,18 +50,26 @@ class OwnerProjectManageController extends GetxController {
           notesController.text = fetchedProject.internalNotes;
           await _loadProjectInvitations();
         } else {
-          Get.back();
-          Get.snackbar('Error', 'Project not found');
+          _handleNotFound();
         }
       } catch (e) {
-        Get.back();
-        Get.snackbar('Error', 'Failed to load project: $e');
+        _handleError(e);
       } finally {
         isLoading.value = false;
       }
     } else {
       isLoading.value = false;
     }
+  }
+
+  void _handleNotFound() {
+    if (Navigator.canPop(Get.context!)) Get.back();
+    Get.snackbar('Error', 'Project not found');
+  }
+
+  void _handleError(dynamic e) {
+    if (Navigator.canPop(Get.context!)) Get.back();
+    Get.snackbar('Error', 'Failed to load project: $e');
   }
 
   StreamSubscription? _projectSub;

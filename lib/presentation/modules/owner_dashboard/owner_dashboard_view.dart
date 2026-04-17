@@ -256,7 +256,7 @@ class _ProjectCard extends StatelessWidget {
           ],
         ),
       ),
-    ).animate(delay: (100 * index).ms).fadeIn().slideY(begin: 0.1);
+    ).animate(delay: Duration(milliseconds: 100 * index)).fadeIn().slideY(begin: 0.1);
   }
 }
 
@@ -290,10 +290,17 @@ class _DeveloperMatchCard extends StatelessWidget {
                 shape: BoxShape.circle,
                 border: Border.all(color: AppTheme.secondary.withValues(alpha: 0.3)),
               ),
-              child: CircleAvatar(
-                radius: 24,
-                backgroundImage: developer.photoUrl != null ? NetworkImage(developer.photoUrl!) : null,
-                child: developer.photoUrl == null ? const Icon(Icons.person) : null,
+              child: ClipOval(
+                child: developer.photoUrl != null && developer.photoUrl!.isNotEmpty
+                    ? Image.network(
+                        developer.photoUrl!,
+                        width: 48,
+                        height: 48,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => const Icon(Icons.person, color: AppTheme.primary),
+                        loadingBuilder: (context, child, loadingProgress) => loadingProgress == null ? child : const CircularProgressIndicator(strokeWidth: 1),
+                      )
+                    : const Icon(Icons.person, color: AppTheme.primary),
               ),
             ),
             const SizedBox(width: 14),
@@ -315,6 +322,6 @@ class _DeveloperMatchCard extends StatelessWidget {
           ],
         ),
       ),
-    ).animate(delay: (80 * index).ms).fadeIn().slideX(begin: 0.1);
+    ).animate(delay: Duration(milliseconds: 80 * index)).fadeIn().slideX(begin: 0.1);
   }
 }

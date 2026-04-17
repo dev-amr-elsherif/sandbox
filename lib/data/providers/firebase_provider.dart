@@ -178,9 +178,14 @@ class FirebaseProvider {
         .collection('invitations')
         .where('projectId', isEqualTo: projectId)
         .get();
-    return snapshot.docs
+    
+    final List<InvitationModel> all = snapshot.docs
         .map((doc) => InvitationModel.fromMap(doc.data(), doc.id))
         .toList();
+
+    // Sort locally to avoid requiring composite indexes
+    all.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    return all;
   }
 
   // جلب طلبات الانضمام التي أرسلها المطور (join_request status)

@@ -130,7 +130,10 @@ class OwnerController extends GetxController {
       if (developers.isEmpty) return;
 
       try {
-        final dio = dio_lib.Dio();
+        final dio = dio_lib.Dio(dio_lib.BaseOptions(
+          connectTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 15),
+        ));
         final baseUrl = GetPlatform.isAndroid ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
         
         // We need to calculate scores for EVERY developer against ONE project.
@@ -174,11 +177,20 @@ class OwnerController extends GetxController {
               }
             }
           } catch (e) {
-            debugPrint('Individual Matching Error for ${dev.name}: $e');
-            // Add a default low score if the specific dev calculation fails
+            debugPrint('Backend matching failed for ${dev.name}, falling back to AI Cloud Architect...');
+            // ─── AI FALLBACK: Use Groq to calculate match score ─────────────
+            final aiScore = await _geminiService.calculateMatch(
+              dev.skills.join(', '), 
+              project.description,
+              githubActivity: {
+                'top_languages': dev.topAiSkills,
+                'seniority': dev.githubSeniority,
+              }
+            );
+            
             results.add({
               'developer': dev,
-              'score': 10.0,
+              'score': aiScore,
             });
           }
         }));

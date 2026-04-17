@@ -6,6 +6,7 @@ import '../../widgets/glass_card.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/skill_chip.dart';
 import '../owner_dashboard/owner_controller.dart';
+import '../ai_chat/ai_chat_view.dart';
 
 class CreateProjectView extends GetView<OwnerController> {
   const CreateProjectView({super.key});
@@ -25,6 +26,7 @@ class CreateProjectView extends GetView<OwnerController> {
     });
 
     return Scaffold(
+      floatingActionButton: _buildAIArchitectFAB(),
       body: Stack(
         children: [
           Container(decoration: const BoxDecoration(gradient: AppTheme.backgroundGradient)),
@@ -42,7 +44,7 @@ class CreateProjectView extends GetView<OwnerController> {
                    _buildManualForm(techController, titleFieldController, descFieldController),
                    const SizedBox(height: 24),
                    _buildSubmitButton(),
-                   const SizedBox(height: 40),
+                   const SizedBox(height: 80), // Extra space for FAB
                 ],
               ),
             ),
@@ -50,6 +52,34 @@ class CreateProjectView extends GetView<OwnerController> {
         ],
       ),
     );
+  }
+
+  Widget _buildAIArchitectFAB() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.secondary.withValues(alpha: 0.3),
+            blurRadius: 15,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: FloatingActionButton.extended(
+        onPressed: () {
+          Get.bottomSheet(
+            const AIChatView(),
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+          );
+        },
+        backgroundColor: AppTheme.secondary,
+        foregroundColor: Colors.black,
+        icon: const Icon(Icons.auto_awesome_rounded, size: 20),
+        label: const Text('Design with AI Architect', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, letterSpacing: 0.5)),
+      ),
+    ).animate().scale(delay: const Duration(seconds: 1)).shimmer(duration: const Duration(seconds: 2));
   }
 
   Widget _buildHeader() {
@@ -101,7 +131,7 @@ class CreateProjectView extends GetView<OwnerController> {
           ),
         ),
       ],
-    ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1);
+    ).animate().fadeIn(delay: const Duration(milliseconds: 200)).slideY(begin: 0.1);
   }
 
   Widget _buildManualForm(TextEditingController techController, TextEditingController titleController, TextEditingController descController) {
@@ -206,7 +236,7 @@ class CreateProjectView extends GetView<OwnerController> {
           ),
         ),
       ],
-    ).animate().fadeIn(delay: 400.ms);
+    ).animate().fadeIn(delay: const Duration(milliseconds: 400));
   }
 
   Widget _buildSmartTechSuggestions() {
@@ -224,7 +254,7 @@ class CreateProjectView extends GetView<OwnerController> {
             return GestureDetector(
               onTap: () => isAdded ? controller.removeTech(s) : controller.addTech(s),
               child: AnimatedContainer(
-                duration: 200.ms,
+                duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: isAdded ? AppTheme.primary.withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
@@ -280,6 +310,6 @@ class CreateProjectView extends GetView<OwnerController> {
           Text('Launch & Match', style: AppTheme.headlineMedium.copyWith(fontSize: 16)),
         ],
       ),
-    )).animate().fadeIn(delay: 600.ms).slideY(begin: 0.1);
+    )).animate().fadeIn(delay: const Duration(milliseconds: 600)).slideY(begin: 0.1);
   }
 }

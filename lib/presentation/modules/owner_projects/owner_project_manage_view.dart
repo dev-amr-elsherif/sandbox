@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../data/models/invitation_model.dart';
-import '../../../../data/models/project_model.dart';
 import '../../../../data/providers/firebase_provider.dart';
 import '../../widgets/glass_card.dart';
 import 'owner_project_manage_controller.dart';
